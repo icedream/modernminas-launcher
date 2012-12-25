@@ -1,0 +1,40 @@
+﻿<Window x:Class="ModernMinas.Launcher.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Modern Minas" Height="400" Width="687"
+        Background="DarkGray" Foreground="White" Name="Main" Loaded="MainWindow_Loaded" MinWidth="685" MinHeight="80">
+    
+    <Grid>
+        <DockPanel Name="MainPanel" HorizontalAlignment="Stretch" Margin="0,0,0,0" VerticalAlignment="Stretch">
+            <DockPanel Name="BottomPanel" DockPanel.Dock="Bottom" Background="Black" Height="80">
+                <Image DockPanel.Dock="Right" Name="Logo" Margin="10" Stretch="Uniform" Width="180" Source="/ModernMinas.Launcher;component/Images/MMtransp.png" />
+
+                <StackPanel Name="BottomContentPanel">
+                    <StackPanel Name="LoginPanel" Visibility="Collapsed" Orientation="Horizontal">
+                        <StackPanel Name="LoginInputPanel" Width="340">
+                            <StackPanel Name="UsernamePanel" Orientation="Horizontal">
+                                <Label FontSize="12" Width="100">Username:</Label>
+                                <TextBox Name="Username" Background="DarkGray" Margin="4" Width="200"></TextBox>
+                            </StackPanel>
+                            <StackPanel Name="PasswordPanel" Orientation="Horizontal">
+                                <Label FontSize="12" Width="100">Password:</Label>
+                                <PasswordBox Name="Password" Background="DarkGray" Margin="4" Width="200"></PasswordBox>
+                            </StackPanel>
+                            <Label Name="LoginError" Foreground="Red" Visibility="Collapsed" FontWeight="Bold">Error</Label>
+                        </StackPanel>
+                        <Button Margin="10" Width="100" FontSize="15" FontWeight="Bold" Name="LoginButton" Click="LoginButton_Click">Login</Button>
+                    </StackPanel>
+                    <StackPanel Name="ProgressPanel" Visibility="Collapsed">
+                        <ProgressBar HorizontalAlignment="Stretch" Height="18" Margin="5" Value="50" />
+                        <Label Name="ProgressText" HorizontalAlignment="Stretch" Margin="5" HorizontalContentAlignment="Center">Please wait...</Label>
+                    </StackPanel>
+                </StackPanel>
+            </DockPanel>
+            <Canvas Name="Content">
+                <Canvas.Background>
+                    <ImageBrush ImageSource="/ModernMinas.Launcher;component/Images/background.png" Stretch="UniformToFill" TileMode="None" />
+                </Canvas.Background>
+            </Canvas>
+        </DockPanel>
+    </Grid>
+</Window>
