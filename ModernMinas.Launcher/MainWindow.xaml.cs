@@ -134,7 +134,7 @@ namespace ModernMinas.Launcher
                 {
                     SetStatus("Downloading: " + GetSizeString(ou) + "/" + GetSizeString(totalUpdateSize));
                     SetProgress((int)(ou / 1024));
-                    System.IO.FileInfo fi = new System.IO.FileInfo(f.GetAbsolutePath("data"));
+                    System.IO.FileInfo fi = new System.IO.FileInfo(System.IO.Path.Combine(baseDir.FullName, f.Name));
                     fi.Directory.Create();
                     var status = updater.RequestFileAsync(f, fi.Create());
                     while(status.Status != RequestFileStatus.Finished)
