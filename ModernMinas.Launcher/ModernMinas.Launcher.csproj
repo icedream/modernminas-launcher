@@ -101,6 +101,12 @@
   <ItemGroup>
     <Resource Include="Images\Brush.png" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\updateapi\Updater API.csproj">
+      <Project>{542805f0-128c-453b-ab69-9af44d16f0b3}</Project>
+      <Name>Updater API</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
