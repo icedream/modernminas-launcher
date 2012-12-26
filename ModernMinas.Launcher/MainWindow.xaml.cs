@@ -169,13 +169,13 @@ namespace ModernMinas.Launcher
                 "minas.mc.modernminas.tk:25565"
             });
             if (javaw.StartInfo.EnvironmentVariables.ContainsKey("APPDATA"))
-                javaw.StartInfo.EnvironmentVariables["APPDATA"] = Environment.CurrentDirectory;
+                javaw.StartInfo.EnvironmentVariables["APPDATA"] = System.IO.Path.Combine(Environment.CurrentDirectory, "data");
             else
-                javaw.StartInfo.EnvironmentVariables.Add("APPDATA", Environment.CurrentDirectory);
+                javaw.StartInfo.EnvironmentVariables.Add("APPDATA", System.IO.Path.Combine(Environment.CurrentDirectory, "data"));
             if (javaw.StartInfo.EnvironmentVariables.ContainsKey("HOME"))
-                javaw.StartInfo.EnvironmentVariables["HOME"] = Environment.CurrentDirectory;
+                javaw.StartInfo.EnvironmentVariables["HOME"] = System.IO.Path.Combine(Environment.CurrentDirectory, "data");
             else
-                javaw.StartInfo.EnvironmentVariables.Add("HOME", Environment.CurrentDirectory);
+                javaw.StartInfo.EnvironmentVariables.Add("HOME", System.IO.Path.Combine(Environment.CurrentDirectory, "data"));
             MessageBox.Show(javaw.StartInfo.Arguments);
             javaw.Start();
 
@@ -267,16 +267,18 @@ namespace ModernMinas.Launcher
         void CheckUpdateDir(DirectoryInfo remote, System.IO.DirectoryInfo local, ref List<FileInfo> filesToUpdate, ref List<System.IO.FileInfo> filesToDelete)
         {
             foreach (var f in remote.Files)
-                CheckUpdateFile(f, new System.IO.FileInfo(f.GetAbsolutePath("data")), ref filesToUpdate);
-            foreach (var f in
+                if(!f.Name.StartsWith(".mm-sys"))
+                    CheckUpdateFile(f, new System.IO.FileInfo(f.GetAbsolutePath("data")), ref filesToUpdate);
+            if(remote.Files.Select(f => f.Name).Contains(".mm-sys.delete"))
+                foreach (var f in
                         from file in local.GetFiles()
                         where !remote.Files.Select(remoteFile => remoteFile.Name.ToLower()).Contains(file.Name.ToLower())
                         select file
                     )
-            {
-                Console.WriteLine("Needs deletion: {0}", local.FullName);
-                filesToDelete.Add(f);
-            }
+                {
+                    Console.WriteLine("Needs deletion: {0}", local.FullName);
+                    filesToDelete.Add(f);
+                }
             foreach (var d in remote.Directories)
                 CheckUpdateDir(d, local.CreateSubdirectory(d.Name), ref filesToUpdate, ref filesToDelete);
         }
