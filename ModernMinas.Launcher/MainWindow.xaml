@@ -23,12 +23,12 @@
                         <Button Margin="10" Width="100" FontSize="15" FontWeight="Bold" Name="LoginButton" Click="LoginButton_Click">Login</Button>
                     </StackPanel>
                     <StackPanel Name="ProgressPanel" Visibility="Collapsed">
-                        <ProgressBar HorizontalAlignment="Stretch" Height="18" Margin="5" Value="50" />
+                        <ProgressBar Name="ProgressBar" HorizontalAlignment="Stretch" Height="18" Margin="5" Value="50" />
                         <Label Name="ProgressText" HorizontalAlignment="Stretch" Margin="5" HorizontalContentAlignment="Center">Please wait...</Label>
                     </StackPanel>
                 </StackPanel>
             </DockPanel>
-            <Canvas Name="Content">
+            <Canvas Name="ContentPanel">
                 <Canvas.Background>
                     <ImageBrush ImageSource="/ModernMinas.Launcher;component/Images/background.png" Stretch="UniformToFill" TileMode="None" />
                 </Canvas.Background>
