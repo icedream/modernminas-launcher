@@ -132,9 +132,10 @@ namespace ModernMinas.Launcher
                 long ou = 0; // finished updates size
                 foreach(var f in filesToUpdate)
                 {
-                    SetStatus("Downloading: " + GetSizeString(ou) + "/" + GetSizeString(totalUpdateSize));
+                    //SetStatus("Downloading: " + GetSizeString(ou) + "/" + GetSizeString(totalUpdateSize));
                     SetProgress((int)(ou / 1024));
                     System.IO.FileInfo fi = new System.IO.FileInfo(System.IO.Path.Combine(f.Directory.GetAbsolutePath(baseDir.FullName), f.Name));
+                    Console.WriteLine("Download: {0}", fi.FullName);
                     fi.Directory.Create();
                     var status = updater.RequestFileAsync(f, fi.Create());
                     while(status.Status != RequestFileStatus.Finished)
@@ -150,13 +151,15 @@ namespace ModernMinas.Launcher
                                         SetStatus("Downloading: " + GetSizeString(ou + status.DownloadStatus.BytesRead) + "/" + GetSizeString(totalUpdateSize));
                                         break;
                                     default:
-                                        SetStatus("Downloading: " + GetSizeString(ou) + "/" + GetSizeString(totalUpdateSize));
+                                        if(status.DownloadStatus != null)
+                                            SetStatus("Downloading: " + GetSizeString(ou + status.DownloadStatus.BytesRead) + "/" + GetSizeString(totalUpdateSize));
                                         break;
                                 }
                                 break;
                             default:
-                                SetStatus("Downloading: " + GetSizeString(ou) + "/" + GetSizeString(totalUpdateSize));
-                                        break;
+                                if(status.DownloadStatus != null)
+                                            SetStatus("Downloading: " + GetSizeString(ou + status.DownloadStatus.BytesRead) + "/" + GetSizeString(totalUpdateSize));
+                                break;
                         }
                     }
                     ou += f.Length;
@@ -202,13 +205,16 @@ namespace ModernMinas.Launcher
         void CheckUpdateDir(DirectoryInfo remote, System.IO.DirectoryInfo local, ref List<FileInfo> filesToUpdate, ref List<System.IO.FileInfo> filesToDelete)
         {
             foreach (var f in remote.Files)
-                CheckUpdateFile(f, new System.IO.FileInfo(System.IO.Path.Combine(remote.GetRelativePath(), f.Name)), ref filesToUpdate);
+                CheckUpdateFile(f, new System.IO.FileInfo(System.IO.Path.Combine(remote.GetAbsolutePath(local.FullName), f.Name)), ref filesToUpdate);
             foreach (var f in
                         from file in local.GetFiles()
                         where !remote.Files.Select(remoteFile => remoteFile.Name.ToLower()).Contains(file.Name.ToLower())
                         select file
                     )
+            {
+                Console.WriteLine("Needs deletion: {0}", local.FullName);
                 filesToDelete.Add(f);
+            }
             foreach (var d in remote.Directories)
                 CheckUpdateDir(d, local.CreateSubdirectory(d.Name), ref filesToUpdate, ref filesToDelete);
         }
@@ -216,7 +222,10 @@ namespace ModernMinas.Launcher
         void CheckUpdateFile(FileInfo remote, System.IO.FileInfo local, ref List<FileInfo> filesToUpdate)
         {
             if (!local.Exists || !local.Length.Equals(remote.Length) || local.LastWriteTimeUtc < remote.LastWriteTimeUtc)
+            {
                 filesToUpdate.Add(remote);
+                Console.WriteLine("Needs update: {0}", local.FullName);
+            }
         }
 
         public void Fade(FrameworkElement c, double targetOpacity, EasingFunctionBase f = null, double ms = 500.0, EventHandler onFinish = null)
