@@ -78,9 +78,11 @@
     </Page>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="MinecraftLogin.cs" />
     <Compile Include="OptionsDialog.xaml.cs">
       <DependentUpon>OptionsDialog.xaml</DependentUpon>
     </Compile>
+    <Compile Include="PKCSKeyGenerator.cs" />
     <Compile Include="Properties\AssemblyInfo.cs">
       <SubType>Code</SubType>
     </Compile>

@@ -1,0 +1,11 @@
+﻿<Window x:Class="ModernMinas.Launcher.OptionsDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="OptionsDialog" Height="304.511" Width="488.346">
+    <StackPanel Orientation="Vertical">
+        <StackPanel Orientation="Horizontal">
+            <Label Width="150">RAM minimal</Label>
+            
+        </StackPanel>
+    </StackPanel>
+</Window>

@@ -14,6 +14,7 @@ using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using System.Security;
 
 namespace ModernMinas.Launcher
 {
@@ -24,6 +25,8 @@ namespace ModernMinas.Launcher
     /// </summary>
     public partial class MainWindow : Window
     {
+        MinecraftLogin l = new MinecraftLogin();
+
         public MainWindow()
         {
             InitializeComponent();
@@ -93,99 +96,129 @@ namespace ModernMinas.Launcher
 
         private void LoginButton_Click(object sender, RoutedEventArgs e)
         {
+            if (string.IsNullOrEmpty(Username.Text) || Username.Text.Contains(' '))
+            {
+                SetError("You need to enter a valid username");
+                return;
+            }
+            if (Password.SecurePassword.Length == 0)
+            {
+                SetError("You need to enter a password.");
+                return;
+            }
             Fade(LoginPanel, 0, null, 250, (a, b) => {
                 LoginPanel.Visibility = System.Windows.Visibility.Collapsed;
                 ProgressPanel.Visibility = System.Windows.Visibility.Visible;
                 ProgressPanel.Opacity = 0;
                 Fade(ProgressPanel, 1, null, 250); //, (c, d) => {
-                System.Threading.Tasks.Task.Factory.StartNew(() => UpdateMinecraft());
-                //});
+                System.Threading.Tasks.Task.Factory.StartNew(
+                    new Action<object>(Login_SepThread),
+                    new object[] { this.Username.Text, this.Password.SecurePassword }
+                );
             });
+        }
+        
+        private void Login_SepThread(object o)
+        {
+            object[] s = (object[])o;
+            Login_SepThread(s[0].ToString(), (SecureString)s[1]);
+        }
+        private void Login_SepThread(string f, SecureString g)
+        {
+            try
+            {
+                Login(f, g);
+                UpdateMinecraft();
+            }
+            catch (Exception err)
+            {
+                SetError(err.Message);
+            }
+        }
+
+        public void Login(string username, SecureString password)
+        {
+            SetProgress();
+            SetStatus("Logging in...");
+            if(!l.Login(username, password))
+            {
+                if(l.LastError is WebException)
+                {
+                    throw new Exception(((WebException)l.LastError).Message.Split(new[]{": "}, StringSplitOptions.RemoveEmptyEntries).Last());
+                }
+                else
+                {
+                    throw l.LastError;
+                }
+            }
+            SetStatus("Login succeeded!");
         }
 
         public void UpdateMinecraft()
         {
-            try
+            // Connect to update server
+            SetProgress();
+            SetStatus("Connecting to update server...");
+            TcpClient tcp = new TcpClient("minas.mc.modernminas.tk", 25555);
+            var ns = tcp.GetStream();
+            var updater = new Connection(ns);
+            updater.SendProtocolVersion(); // Check if protocol version fits
+
+            SetStatus("Checking for updates...");
+            var repository = updater.RequestFileList();
+            List<FileInfo> filesToUpdate = new List<FileInfo>();
+            List<System.IO.FileInfo> filesToDelete = new List<System.IO.FileInfo>();
+            var baseDir = new System.IO.DirectoryInfo("data");
+            baseDir.Create();
+            CheckUpdateDir(repository, baseDir, ref filesToUpdate, ref filesToDelete);
+
+            SetStatus("Downloading updates...");
+            var totalUpdateSize = filesToUpdate.Select(u => u.Length).Sum();
+            SetProgress(0, (int)(totalUpdateSize / 1024));
+            long ou = 0; // finished updates size
+            foreach (var f in filesToUpdate)
             {
-                // TODO: Minecraft login
-                // TODO: Minecraft jar selection/Seperate components selection
-
-                // Connect to update server
-                SetProgress();
-                SetStatus("Connecting to update server...");
-                TcpClient tcp = new TcpClient("minas.mc.modernminas.tk", 25555);
-                var ns = tcp.GetStream();
-                var updater = new Connection(ns);
-                updater.SendProtocolVersion(); // Check if protocol version fits
-
-                SetStatus("Checking for updates...");
-                var repository = updater.RequestFileList();
-                List<FileInfo> filesToUpdate = new List<FileInfo>();
-                List<System.IO.FileInfo> filesToDelete = new List<System.IO.FileInfo>();
-                var baseDir = new System.IO.DirectoryInfo("data");
-                baseDir.Create();
-                CheckUpdateDir(repository, baseDir, ref filesToUpdate, ref filesToDelete);
-
-                SetStatus("Downloading updates...");
-                var totalUpdateSize = filesToUpdate.Select(u => u.Length).Sum();
-                SetProgress(0, (int)(totalUpdateSize / 1024));
-                long ou = 0; // finished updates size
-                foreach(var f in filesToUpdate)
+                //SetStatus("Downloading: " + GetSizeString(ou) + "/" + GetSizeString(totalUpdateSize));
+                SetProgress((int)(ou / 1024));
+                System.IO.FileInfo fi = new System.IO.FileInfo(System.IO.Path.Combine(f.Directory.GetAbsolutePath(baseDir.FullName), f.Name));
+                Console.WriteLine("Download: {0}", fi.FullName);
+                fi.Directory.Create();
+                var status = updater.RequestFileAsync(f, fi.Create());
+                while (status.Status != RequestFileStatus.Finished)
                 {
-                    //SetStatus("Downloading: " + GetSizeString(ou) + "/" + GetSizeString(totalUpdateSize));
-                    SetProgress((int)(ou / 1024));
-                    System.IO.FileInfo fi = new System.IO.FileInfo(System.IO.Path.Combine(f.Directory.GetAbsolutePath(baseDir.FullName), f.Name));
-                    Console.WriteLine("Download: {0}", fi.FullName);
-                    fi.Directory.Create();
-                    var status = updater.RequestFileAsync(f, fi.Create());
-                    while(status.Status != RequestFileStatus.Finished)
+                    System.Threading.Thread.Sleep(100);
+                    switch (status.Status)
                     {
-                        System.Threading.Thread.Sleep(100);
-                        switch(status.Status)
-                        {
-                            case RequestFileStatus.DownloadingFile:
-                                switch(status.DownloadStatus.Status)
-                                {
-                                    case ReadFileStatus.Downloading:
-                                        SetProgress((int)((ou + status.DownloadStatus.BytesRead) / 1024));
+                        case RequestFileStatus.DownloadingFile:
+                            switch (status.DownloadStatus.Status)
+                            {
+                                case ReadFileStatus.Downloading:
+                                    SetProgress((int)((ou + status.DownloadStatus.BytesRead) / 1024));
+                                    SetStatus("Downloading: " + GetSizeString(ou + status.DownloadStatus.BytesRead) + "/" + GetSizeString(totalUpdateSize));
+                                    break;
+                                default:
+                                    if (status.DownloadStatus != null)
                                         SetStatus("Downloading: " + GetSizeString(ou + status.DownloadStatus.BytesRead) + "/" + GetSizeString(totalUpdateSize));
-                                        break;
-                                    default:
-                                        if(status.DownloadStatus != null)
-                                            SetStatus("Downloading: " + GetSizeString(ou + status.DownloadStatus.BytesRead) + "/" + GetSizeString(totalUpdateSize));
-                                        break;
-                                }
-                                break;
-                            default:
-                                if(status.DownloadStatus != null)
-                                            SetStatus("Downloading: " + GetSizeString(ou + status.DownloadStatus.BytesRead) + "/" + GetSizeString(totalUpdateSize));
-                                break;
-                        }
+                                    break;
+                            }
+                            break;
+                        default:
+                            if (status.DownloadStatus != null)
+                                SetStatus("Downloading: " + GetSizeString(ou + status.DownloadStatus.BytesRead) + "/" + GetSizeString(totalUpdateSize));
+                            break;
                     }
-                    ou += f.Length;
                 }
-                updater.Disconnect();
-
-                SetStatus("Deleting files...");
-                foreach(var f in filesToDelete)
-                    f.Delete();
-
-                SetError("Download finished!");
-                return;
-                // TODO: Minecraft launch
+                ou += f.Length;
             }
-            catch (Exception e)
-            {
-                MessageBox.Show("Could not finish update.\r\n" +
-#if DEBUG
- e.ToString()
-#else
- e.Message
-#endif
-, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                SetError(e.Message);
-                return;
-            }
+            updater.Disconnect();
+
+            SetStatus("Deleting files...");
+            foreach (var f in filesToDelete)
+                f.Delete();
+
+            SetError("Download finished!");
+            return;
+            // TODO: Minecraft launch
         }
 
         string GetSizeString(double size)
