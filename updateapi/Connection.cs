@@ -12,7 +12,7 @@ using ProtoBuf.Meta;
 
 namespace ModernMinas.Launcher.API
 {
-    [ProtocolVersion(1)]
+    [ProtocolVersion(2)]
     public class Connection
     {
         protected NetworkStream _nstream;
@@ -368,7 +368,8 @@ namespace ModernMinas.Launcher.API
                 throw new ArgumentNullException("targetStream");
             if (s != null) s.Status = RequestFileStatus.RequestingFile;
             SendCommand(Command.GetFile);
-            Write(fileInfo);
+            //Write(fileInfo);
+            WriteString(fileInfo.Directory.GetRelativePath().Replace(System.IO.Path.DirectorySeparatorChar.ToString(), "/"));
             if (ReadCommand() == Command.Status_Error)
                 ThrowError();
             if (s != null) s.Status = RequestFileStatus.DownloadingFile;
@@ -386,6 +387,7 @@ namespace ModernMinas.Launcher.API
         protected void ThrowError()
         {
             string error = ReadString();
+            Console.WriteLine("Error is {0}", error);
             throw new Exception(error);
         }
     }

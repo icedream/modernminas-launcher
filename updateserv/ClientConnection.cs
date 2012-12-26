@@ -52,12 +52,13 @@ namespace ModernMinas.UpdateServer
                         case Command.GetFile:
                             {
                                 Console.WriteLine("[{0}] Reading file info...", EndPoint);
-                                var file = Read<FileInfo>();
-                                Console.WriteLine("[{0}] File is {1}", EndPoint, file.Name);
+                                //var file = Read<FileInfo>();
+                                var file_io = new System.IO.FileInfo(System.IO.Path.Combine("files", ReadString().Replace('/', System.IO.Path.DirectorySeparatorChar)));
+                                Console.WriteLine("[{0}] File is {1}", EndPoint, file_io.Name);
                                 SendCommand(Command.Status_OK);
-                                Console.WriteLine("[{0}] Sending file...", EndPoint, file.Name);
-                                WriteFile(file, "files");
-                                Console.WriteLine("[{0}] Send finished.", EndPoint, file.Name);
+                                Console.WriteLine("[{0}] Sending file...", EndPoint);
+                                WriteFile(file_io);
+                                Console.WriteLine("[{0}] Send finished.", EndPoint);
                             }
                             break;
                         default:
