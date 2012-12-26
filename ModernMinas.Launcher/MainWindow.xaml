@@ -8,7 +8,7 @@
             <DockPanel Name="BottomPanel" DockPanel.Dock="Bottom" Background="Black" Height="80">
                 <Image DockPanel.Dock="Right" Name="Logo" Margin="10" Stretch="Uniform" Width="180" Source="Images/MMtransp.png" />
                 <StackPanel Name="BottomContentPanel">
-                    <StackPanel Name="LoginPanel" Visibility="Collapsed" Orientation="Horizontal">
+                    <StackPanel Name="LoginPanel" Visibility="Visible" Orientation="Horizontal">
                         <StackPanel Name="LoginInputPanel" Width="340">
                             <StackPanel Name="UsernamePanel" Orientation="Horizontal">
                                 <Label FontSize="12" Width="100">Username:</Label>
@@ -20,7 +20,8 @@
                             </StackPanel>
                             <Label Name="LoginError" Foreground="Red" Visibility="Collapsed" FontWeight="Bold">Error</Label>
                         </StackPanel>
-                        <Button Margin="10" Width="100" FontSize="15" FontWeight="Bold" Name="LoginButton" Click="LoginButton_Click">Login</Button>
+                        <Button Height="30" Padding="5" FontWeight="Bold" FontSize="12" Name="LoginButton" Click="LoginButton_Click" IsDefault="True">Login</Button>
+                        <Button Height="30" Padding="5" FontWeight="Bold" FontSize="12" Name="OptionsButton" Click="OptionsButton_Click">Options</Button>
                     </StackPanel>
                     <StackPanel Name="ProgressPanel" Visibility="Collapsed">
                         <ProgressBar Name="ProgressBar" HorizontalAlignment="Stretch" Height="18" Margin="5" Value="50" />

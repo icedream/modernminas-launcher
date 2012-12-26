@@ -27,6 +27,9 @@ namespace ModernMinas.Launcher
     {
         MinecraftLogin l = new MinecraftLogin();
 
+        int MinimalRam = 512;
+        int MaximalRam = 1024;
+
         public MainWindow()
         {
             InitializeComponent();
@@ -48,7 +51,6 @@ namespace ModernMinas.Launcher
                 this.LoginError.Content = text;
                 Fade(this.ProgressPanel, 0, null, 250.0, (a, b) =>
                 {
-                    //MessageBox.Show(text);
                     this.ProgressPanel.Visibility = System.Windows.Visibility.Collapsed;
                     this.LoginPanel.Visibility = System.Windows.Visibility.Visible;
                     this.LoginPanel.Opacity = 0;
@@ -68,13 +70,11 @@ namespace ModernMinas.Launcher
                 if (max > int.MinValue) this.ProgressBar.Maximum = max;
                 if (val >= 0)
                 {
-                    //Fade(this.ProgressBar, 1, null, 250);
                     this.ProgressBar.Value = val;
                     this.ProgressBar.IsIndeterminate = false;
                 }
                 else
                 {
-                    //Fade(this.ProgressBar, 0, null, 250);
                     this.ProgressBar.Value = 100;
                     this.ProgressBar.IsIndeterminate = true;
                 }
@@ -129,6 +129,7 @@ namespace ModernMinas.Launcher
             {
                 Login(f, g);
                 UpdateMinecraft();
+                StartMinecraft(f);
             }
             catch (Exception err)
             {
@@ -154,6 +155,36 @@ namespace ModernMinas.Launcher
             SetStatus("Login succeeded!");
         }
 
+        public void StartMinecraft(string username)
+        {
+            
+            var javaw = JavaPath.CreateJavaW(new[] {
+                "-Xms" + MinimalRam + "M",
+                "-Xmx" + MaximalRam + "M",
+                "-Djava.library.path=data/.minecraft/bin/natives",
+                "-cp", "data/.minecraft/bin/minecraft.jar;data/.minecraft/bin/lwjgl.jar;data/.minecraft/bin/lwjgl_util.jar;data/.minecraft/bin/jinput.jar",
+                "net.minecraft.client.Minecraft",
+                username,
+                l.SessionId,
+                "minas.mc.modernminas.tk:25565"
+            });
+            if (javaw.StartInfo.EnvironmentVariables.ContainsKey("APPDATA"))
+                javaw.StartInfo.EnvironmentVariables["APPDATA"] = Environment.CurrentDirectory;
+            else
+                javaw.StartInfo.EnvironmentVariables.Add("APPDATA", Environment.CurrentDirectory);
+            if (javaw.StartInfo.EnvironmentVariables.ContainsKey("HOME"))
+                javaw.StartInfo.EnvironmentVariables["HOME"] = Environment.CurrentDirectory;
+            else
+                javaw.StartInfo.EnvironmentVariables.Add("HOME", Environment.CurrentDirectory);
+            MessageBox.Show(javaw.StartInfo.Arguments);
+            javaw.Start();
+
+            this.Dispatcher.Invoke(new Action(() =>
+            {
+                this.Close();
+            }));
+        }
+
         public void UpdateMinecraft()
         {
             // Connect to update server
@@ -172,13 +203,12 @@ namespace ModernMinas.Launcher
             baseDir.Create();
             CheckUpdateDir(repository, baseDir, ref filesToUpdate, ref filesToDelete);
 
-            SetStatus("Downloading updates...");
+            SetStatus("Downloading...");
             var totalUpdateSize = filesToUpdate.Select(u => u.Length).Sum();
             SetProgress(0, (int)(totalUpdateSize / 1024));
             long ou = 0; // finished updates size
             foreach (var f in filesToUpdate)
             {
-                //SetStatus("Downloading: " + GetSizeString(ou) + "/" + GetSizeString(totalUpdateSize));
                 SetProgress((int)(ou / 1024));
                 System.IO.FileInfo fi = new System.IO.FileInfo(System.IO.Path.Combine(f.Directory.GetAbsolutePath(baseDir.FullName), f.Name));
                 Console.WriteLine("Download: {0}", fi.FullName);
@@ -216,9 +246,8 @@ namespace ModernMinas.Launcher
             foreach (var f in filesToDelete)
                 f.Delete();
 
-            SetError("Download finished!");
-            return;
-            // TODO: Minecraft launch
+            SetStatus("Update finished");
+            SetProgress(1, 1);
         }
 
         string GetSizeString(double size)
@@ -308,6 +337,19 @@ namespace ModernMinas.Launcher
             LoginPanel.Visibility = System.Windows.Visibility.Visible;
             LoginPanel.Opacity = 0;
             Fade(LoginPanel, 1, null, 1000.0);
+        }
+
+        private void OptionsButton_Click(object sender, RoutedEventArgs e)
+        {
+            OptionsDialog dlg = new OptionsDialog();
+            dlg.MinimumRam = MinimalRam;
+            dlg.MaximumRam = MaximalRam;
+            dlg.ShowDialog();
+            if(dlg.ShouldApply)
+            {
+                MinimalRam = dlg.MinimumRam;
+                MaximalRam = dlg.MaximumRam;
+            }
         }
     }
 }

@@ -118,9 +118,7 @@ namespace ModernMinas.Launcher
                 streamWriter.Flush();
                 streamWriter.Close();
                 HttpWebResponse response = (HttpWebResponse)httpWebRequest.GetResponse();
-                //char[] array = new char[4 * 1024];
                 StreamReader streamReader = new StreamReader(response.GetResponseStream());
-                //int l = streamReader.Read(array, 0, (int)response.ContentLength);
                 string t = streamReader.ReadLine();
                 response.Close();
                 string[] array2 = t.Split(new char[]
