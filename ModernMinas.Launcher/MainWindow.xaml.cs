@@ -42,15 +42,16 @@ namespace ModernMinas.Launcher
         {
             this.Dispatcher.Invoke(new Action(delegate()
             {
-                Fade(this.ProgressPanel, 0, null, 500.0, (a, b) =>
+                this.LoginError.Content = text;
+                Fade(this.ProgressPanel, 0, null, 250.0, (a, b) =>
                 {
                     //MessageBox.Show(text);
                     this.ProgressPanel.Visibility = System.Windows.Visibility.Collapsed;
                     this.LoginPanel.Visibility = System.Windows.Visibility.Visible;
                     this.LoginPanel.Opacity = 0;
-                    this.LoginError.Content = text;
                     this.LoginPanel.Height = this.BottomContentPanel.Height = !string.IsNullOrEmpty(text) ? 84 : 60;
-                    Fade(this.LoginPanel, 500);
+                    this.LoginError.Visibility = !string.IsNullOrEmpty(text) ? Visibility.Visible : Visibility.Collapsed;
+                    Fade(this.LoginPanel, 1);
                 });
             }));
         }
@@ -61,7 +62,7 @@ namespace ModernMinas.Launcher
             {
                 if (val >= 0)
                 {
-                    Fade(this.ProgressBar, 1, null, 250);
+                    //Fade(this.ProgressBar, 1, null, 250);
                     this.ProgressBar.Minimum = min;
                     this.ProgressBar.Maximum = max;
                     this.ProgressBar.Value = val;
@@ -70,6 +71,7 @@ namespace ModernMinas.Launcher
                 else
                 {
                     //Fade(this.ProgressBar, 0, null, 250);
+                    this.ProgressBar.Value = 100;
                     this.ProgressBar.IsIndeterminate = true;
                 }
             }));
@@ -111,6 +113,7 @@ namespace ModernMinas.Launcher
                 var repository = updater.RequestFileList();
                 updater.Disconnect();
                 List<FileInfo> filesToUpdate = new List<FileInfo>();
+                CheckUpdateDir(repository, new System.IO.DirectoryInfo("data"), ref filesToUpdate);
                 SetError(string.Format("Found {0} updates.", filesToUpdate.Count));
                 return;
                 // TODO: Minecraft launch
