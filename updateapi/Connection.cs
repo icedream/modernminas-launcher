@@ -45,6 +45,7 @@ namespace ModernMinas.Launcher.API
         protected void WriteString(String s)
         {
             WriteInt32(s.Length);
+            WriteBytes(Encoding.BigEndianUnicode.GetBytes(s));
         }
         protected void WriteChar(Char v)
         {
