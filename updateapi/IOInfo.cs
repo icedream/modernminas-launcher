@@ -23,10 +23,6 @@ namespace ModernMinas.Launcher.API
         [ProtoMember(1, IsRequired = true)]
         public string Name { get; set; }
 
-        public System.IO.FileInfo GetIOFileInfo()
-        {
-            return new System.IO.FileInfo(GetAbsolutePath());
-        }
         public System.IO.FileInfo GetIOFileInfo(string prefix)
         {
             return new System.IO.FileInfo(GetAbsolutePath(prefix));
@@ -34,12 +30,7 @@ namespace ModernMinas.Launcher.API
 
         public string GetRelativePath()
         {
-            return GetAbsolutePath(".");
-        }
-
-        public string GetAbsolutePath()
-        {
-            return GetAbsolutePath("");
+            return System.IO.Path.Combine(Directory.GetRelativePath(), this.Name);
         }
 
         public string GetAbsolutePath(string prefix)
@@ -109,7 +100,7 @@ namespace ModernMinas.Launcher.API
                 t = t.Parent;
             }
 
-            StringBuilder sb = new StringBuilder(System.IO.Path.GetFullPath(prefix).TrimEnd(System.IO.Path.DirectorySeparatorChar));
+            StringBuilder sb = new StringBuilder(prefix.TrimEnd(System.IO.Path.DirectorySeparatorChar));
             while (DirectoryNames.Any())
                 sb.AppendFormat("{0}{1}", System.IO.Path.DirectorySeparatorChar, DirectoryNames.Pop());
 

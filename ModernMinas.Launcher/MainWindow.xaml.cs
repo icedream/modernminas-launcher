@@ -205,7 +205,7 @@ namespace ModernMinas.Launcher
         void CheckUpdateDir(DirectoryInfo remote, System.IO.DirectoryInfo local, ref List<FileInfo> filesToUpdate, ref List<System.IO.FileInfo> filesToDelete)
         {
             foreach (var f in remote.Files)
-                CheckUpdateFile(f, new System.IO.FileInfo(System.IO.Path.Combine(remote.GetAbsolutePath(local.FullName), f.Name)), ref filesToUpdate);
+                CheckUpdateFile(f, new System.IO.FileInfo(f.GetAbsolutePath("data")), ref filesToUpdate);
             foreach (var f in
                         from file in local.GetFiles()
                         where !remote.Files.Select(remoteFile => remoteFile.Name.ToLower()).Contains(file.Name.ToLower())
@@ -223,8 +223,11 @@ namespace ModernMinas.Launcher
         {
             if (!local.Exists || !local.Length.Equals(remote.Length) || local.LastWriteTimeUtc < remote.LastWriteTimeUtc)
             {
+                Console.WriteLine();
+                //Console.WriteLine("Local file: {0}, {1} bytes, {2}", local.Name, local.Length, local.LastWriteTimeUtc);
+                Console.WriteLine("Remote file: {0}, {1} bytes, {2}", remote.Name, remote.Length, remote.LastWriteTimeUtc);
                 filesToUpdate.Add(remote);
-                Console.WriteLine("Needs update: {0}", local.FullName);
+                Console.WriteLine("=> Needs update");
             }
         }
 

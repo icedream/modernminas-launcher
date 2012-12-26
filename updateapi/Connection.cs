@@ -34,18 +34,19 @@ namespace ModernMinas.Launcher.API
 
         protected void WriteBytes(params Byte[] content)
         {
-            _bstream.Write(content, 0, content.Length);
-            _bstream.Flush();
+            _nstream.Write(content, 0, content.Length);
+            _nstream.Flush();
         }
         protected void WriteByte(Byte content)
         {
-            _bstream.WriteByte(content);
-            _bstream.Flush();
+            _nstream.WriteByte(content);
+            _nstream.Flush();
         }
         protected void WriteString(String s)
         {
-            WriteInt32(s.Length);
-            WriteBytes(Encoding.BigEndianUnicode.GetBytes(s));
+            var sdata = Encoding.BigEndianUnicode.GetBytes(s);
+            WriteInt32(sdata.Length);
+            WriteBytes(sdata);
         }
         protected void WriteChar(Char v)
         {
@@ -194,8 +195,8 @@ namespace ModernMinas.Launcher.API
         }
         protected String ReadString()
         {
-            var length = ReadInt16();
-            var data = ReadBytes(length * Encoding.BigEndianUnicode.GetMaxByteCount(1));
+            var length = ReadInt32();
+            var data = ReadBytes(length);
             return Encoding.BigEndianUnicode.GetString(data);
         }
         protected Char ReadChar()
@@ -370,7 +371,7 @@ namespace ModernMinas.Launcher.API
             if (s != null) s.Status = RequestFileStatus.RequestingFile;
             SendCommand(Command.GetFile);
             //Write(fileInfo);
-            WriteString(fileInfo.Directory.GetRelativePath().Replace(System.IO.Path.DirectorySeparatorChar.ToString(), "/"));
+            WriteString(fileInfo.GetRelativePath().Replace(System.IO.Path.DirectorySeparatorChar.ToString(), "/"));
             if (ReadCommand() == Command.Status_Error)
                 ThrowError();
             if (s != null) s.Status = RequestFileStatus.DownloadingFile;

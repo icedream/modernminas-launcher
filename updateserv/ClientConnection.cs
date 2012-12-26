@@ -53,12 +53,21 @@ namespace ModernMinas.UpdateServer
                             {
                                 Console.WriteLine("[{0}] Reading file info...", EndPoint);
                                 //var file = Read<FileInfo>();
-                                var file_io = new System.IO.FileInfo(System.IO.Path.Combine("files", ReadString().Replace('/', System.IO.Path.DirectorySeparatorChar)));
-                                Console.WriteLine("[{0}] File is {1}", EndPoint, file_io.Name);
-                                SendCommand(Command.Status_OK);
-                                Console.WriteLine("[{0}] Sending file...", EndPoint);
-                                WriteFile(file_io);
-                                Console.WriteLine("[{0}] Send finished.", EndPoint);
+                                string file_req = ReadString();
+                                Console.WriteLine("[{0}] Requested file path is {1}", EndPoint, file_req);
+                                file_req = System.IO.Path.Combine("files", file_req.Replace('/', System.IO.Path.DirectorySeparatorChar));
+                                Console.WriteLine("[{0}] Resolved relative path is {1}", EndPoint, file_req);
+                                var file_io = new System.IO.FileInfo(file_req);
+                                Console.WriteLine("[{0}] Full path is {1}", EndPoint, file_io.FullName);
+                                if (!file_io.Exists)
+                                    Error("File does not exist on the server");
+                                else
+                                {
+                                    SendCommand(Command.Status_OK);
+                                    Console.WriteLine("[{0}] Sending file...", EndPoint);
+                                    WriteFile(file_io);
+                                    Console.WriteLine("[{0}] Send finished.", EndPoint);
+                                }
                             }
                             break;
                         default:
