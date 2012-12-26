@@ -56,15 +56,16 @@ namespace ModernMinas.Launcher
             }));
         }
 
-        public void SetProgress(int val = -1, int max = 100, int min = 0)
+        public void SetProgress(int val = -1, int max = int.MinValue, int min = int.MinValue)
         {
             this.ProgressBar.Dispatcher.Invoke(new Action(delegate()
             {
+                this.ProgressBar.Visibility = System.Windows.Visibility.Visible;
+                if (min > int.MinValue) this.ProgressBar.Minimum = min;
+                if (max > int.MinValue) this.ProgressBar.Maximum = max;
                 if (val >= 0)
                 {
                     //Fade(this.ProgressBar, 1, null, 250);
-                    this.ProgressBar.Minimum = min;
-                    this.ProgressBar.Maximum = max;
                     this.ProgressBar.Value = val;
                     this.ProgressBar.IsIndeterminate = false;
                 }
@@ -77,6 +78,14 @@ namespace ModernMinas.Launcher
             }));
         }
 
+        public void ChangeProgress(int byValue = 1)
+        {
+            this.ProgressBar.Dispatcher.Invoke(new Action(delegate()
+            {
+                this.ProgressBar.Value += byValue;
+            }));
+        }
+
         private void MainWindow_Loaded(object sender, RoutedEventArgs e)
         {
             this.BottomContentPanel.Height = 60;
@@ -85,7 +94,6 @@ namespace ModernMinas.Launcher
         private void LoginButton_Click(object sender, RoutedEventArgs e)
         {
             Fade(LoginPanel, 0, null, 250, (a, b) => {
-                this.ProgressBar.Opacity = 0;
                 LoginPanel.Visibility = System.Windows.Visibility.Collapsed;
                 ProgressPanel.Visibility = System.Windows.Visibility.Visible;
                 ProgressPanel.Opacity = 0;
@@ -108,13 +116,58 @@ namespace ModernMinas.Launcher
                 TcpClient tcp = new TcpClient("minas.mc.modernminas.tk", 25555);
                 var ns = tcp.GetStream();
                 var updater = new Connection(ns);
-                updater.SendProtocolVersion();
+                updater.SendProtocolVersion(); // Check if protocol version fits
+
                 SetStatus("Checking for updates...");
                 var repository = updater.RequestFileList();
-                updater.Disconnect();
                 List<FileInfo> filesToUpdate = new List<FileInfo>();
-                CheckUpdateDir(repository, new System.IO.DirectoryInfo("data"), ref filesToUpdate);
-                SetError(string.Format("Found {0} updates.", filesToUpdate.Count));
+                List<System.IO.FileInfo> filesToDelete = new List<System.IO.FileInfo>();
+                var baseDir = new System.IO.DirectoryInfo("data");
+                baseDir.Create();
+                CheckUpdateDir(repository, baseDir, ref filesToUpdate, ref filesToDelete);
+
+                SetStatus("Downloading updates...");
+                var totalUpdateSize = filesToUpdate.Select(u => u.Length).Sum();
+                SetProgress(0, (int)(totalUpdateSize / 1024));
+                long ou = 0; // finished updates size
+                foreach(var f in filesToUpdate)
+                {
+                    SetStatus("Downloading: " + GetSizeString(ou) + "/" + GetSizeString(totalUpdateSize));
+                    SetProgress((int)(ou / 1024));
+                    System.IO.FileInfo fi = new System.IO.FileInfo(f.GetAbsolutePath("data"));
+                    fi.Directory.Create();
+                    var status = updater.RequestFileAsync(f, fi.Create());
+                    while(status.Status != RequestFileStatus.Finished)
+                    {
+                        System.Threading.Thread.Sleep(100);
+                        switch(status.Status)
+                        {
+                            case RequestFileStatus.DownloadingFile:
+                                switch(status.DownloadStatus.Status)
+                                {
+                                    case ReadFileStatus.Downloading:
+                                        SetProgress((int)((ou + status.DownloadStatus.BytesRead) / 1024));
+                                        SetStatus("Downloading: " + GetSizeString(ou + status.DownloadStatus.BytesRead) + "/" + GetSizeString(totalUpdateSize));
+                                        break;
+                                    default:
+                                        SetStatus("Downloading: " + GetSizeString(ou) + "/" + GetSizeString(totalUpdateSize));
+                                        break;
+                                }
+                                break;
+                            default:
+                                SetStatus("Downloading: " + GetSizeString(ou) + "/" + GetSizeString(totalUpdateSize));
+                                        break;
+                        }
+                    }
+                    ou += f.Length;
+                }
+                updater.Disconnect();
+
+                SetStatus("Deleting files...");
+                foreach(var f in filesToDelete)
+                    f.Delete();
+
+                SetError("Download finished!");
                 return;
                 // TODO: Minecraft launch
             }
@@ -132,12 +185,32 @@ namespace ModernMinas.Launcher
             }
         }
 
-        void CheckUpdateDir(DirectoryInfo remote, System.IO.DirectoryInfo local, ref List<FileInfo> filesToUpdate)
+        string GetSizeString(double size)
         {
-            foreach(var f in remote.Files)
+            string[] suffixes = new[] {
+                "B", "kB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"
+            };
+            int i = 0;
+            while(size > 1024)
+            {
+                i++;
+                size /= 1024;
+            }
+            return string.Format("{0:N1} {1}", size, suffixes[Math.Min(suffixes.Length, i)]);
+        }
+
+        void CheckUpdateDir(DirectoryInfo remote, System.IO.DirectoryInfo local, ref List<FileInfo> filesToUpdate, ref List<System.IO.FileInfo> filesToDelete)
+        {
+            foreach (var f in remote.Files)
                 CheckUpdateFile(f, new System.IO.FileInfo(System.IO.Path.Combine(remote.GetRelativePath(), f.Name)), ref filesToUpdate);
+            foreach (var f in
+                        from file in local.GetFiles()
+                        where !remote.Files.Select(remoteFile => remoteFile.Name.ToLower()).Contains(file.Name.ToLower())
+                        select file
+                    )
+                filesToDelete.Add(f);
             foreach (var d in remote.Directories)
-                CheckUpdateDir(d, local.CreateSubdirectory(d.Name), ref filesToUpdate);
+                CheckUpdateDir(d, local.CreateSubdirectory(d.Name), ref filesToUpdate, ref filesToDelete);
         }
 
         void CheckUpdateFile(FileInfo remote, System.IO.FileInfo local, ref List<FileInfo> filesToUpdate)

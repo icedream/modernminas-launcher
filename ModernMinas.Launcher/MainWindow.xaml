@@ -6,7 +6,7 @@
     <Grid>
         <DockPanel Name="MainPanel" HorizontalAlignment="Stretch" Margin="0,0,0,0" VerticalAlignment="Stretch">
             <DockPanel Name="BottomPanel" DockPanel.Dock="Bottom" Background="Black" Height="80">
-                <Image DockPanel.Dock="Right" Name="Logo" Margin="10" Stretch="Uniform" Width="180" Source="/ModernMinas.Launcher;component/Images/MMtransp.png" />
+                <Image DockPanel.Dock="Right" Name="Logo" Margin="10" Stretch="Uniform" Width="180" Source="Images/MMtransp.png" />
                 <StackPanel Name="BottomContentPanel">
                     <StackPanel Name="LoginPanel" Visibility="Collapsed" Orientation="Horizontal">
                         <StackPanel Name="LoginInputPanel" Width="340">
@@ -30,7 +30,7 @@
             </DockPanel>
             <Canvas Name="ContentPanel">
                 <Canvas.Background>
-                    <ImageBrush ImageSource="/ModernMinas.Launcher;component/Images/background.png" Stretch="UniformToFill" TileMode="None" />
+                    <ImageBrush ImageSource="Images/background.png" Stretch="UniformToFill" TileMode="None" />
                 </Canvas.Background>
             </Canvas>
         </DockPanel>

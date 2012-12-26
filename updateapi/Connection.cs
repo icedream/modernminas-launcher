@@ -160,7 +160,7 @@ namespace ModernMinas.Launcher.API
             }
 
             var _cfstream = lzma.OpenRead();
-            _cfstream.CopyTo(_bstream, 4096);
+            _cfstream.CopyTo(_bstream, 32 * 1024);
             _bstream.Flush();
             _cfstream.Close();
             _cfstream.Dispose();
@@ -237,21 +237,49 @@ namespace ModernMinas.Launcher.API
         {
             return Serializer.DeserializeWithLengthPrefix<T>(_bstream, PrefixStyle.Base128);
         }
-        protected void ReadFile(Stream targetStream, long length)
+        protected ReadFileAsyncStatus ReadFileAsync(Stream targetStream, long length)
         {
+            ReadFileAsyncStatus s = new ReadFileAsyncStatus();
+            Action asyncFunction = () => {
+                try
+                {
+                    ReadFile(targetStream, length, s);
+                }
+                catch (Exception e)
+                {
+                    s.IsError = true;
+                    s.Exception = e;
+                }
+            };
+            System.Threading.Tasks.Task.Factory.StartNew(asyncFunction);
+            return s;
+        }
+        protected void ReadFile(Stream targetStream, long length, ReadFileAsyncStatus stat = null)
+        {
+            // TODO: Implement IsBusy check for ReadFileAsync
+
+            if (stat != null)
+            {
+                stat.BytesTotal = length;
+                stat.Status = ReadFileStatus.Preparing;
+            }
+
             var _cstream
                 = new SharpCompress.Compressor.LZMA.LzmaStream(
                     ReadBytes(5),
                     _bstream
                   );
 
-            byte[] buffer = new byte[32 * 1024];
+            byte[] buffer = new byte[8 * 1024];
             int buffRead = buffer.Length;
+
+            if (stat != null)
+                stat.Status = ReadFileStatus.Downloading;
 
             do
             {
-                targetStream.Write(buffer, 0, 
-                    _cstream.Read(buffer, 0, (int)Math.Min(
+                var dt = DateTime.Now;
+                var read = _cstream.Read(buffer, 0, (int)Math.Min(
                         // Use rest of needed bytes if smaller than buffer length
                         length != -1
                             ? length - _cstream.Position
@@ -259,9 +287,13 @@ namespace ModernMinas.Launcher.API
 
                         // Otherwise use buffer length
                         buffer.Length
-                    ))
-                );
-                Console.Write("  {1}%/{0} kB\r", Math.Floor((decimal)_cstream.Position / 1024), Math.Floor(100 * ((double)_cstream.Position / length)));
+                    ));
+                if (stat != null)
+                {
+                    stat.BytesPerSecond = read / DateTime.Now.Subtract(dt).TotalSeconds;
+                    stat.BytesRead += read;
+                }
+                targetStream.Write(buffer, 0, read);
             }
             while (_cstream.Position < length);
 
@@ -307,16 +339,42 @@ namespace ModernMinas.Launcher.API
         }
 
         public void RequestFile(API.FileInfo fileInfo, Stream targetStream)
+        { RequestFile(fileInfo, targetStream, null); }
+
+        public RequestFileAsyncStatus RequestFileAsync(API.FileInfo fileInfo, Stream targetStream)
+        {
+            RequestFileAsyncStatus s = new RequestFileAsyncStatus();
+            Action asyncFunction = () =>
+            {
+                try
+                {
+                    RequestFile(fileInfo, targetStream, s);
+                }
+                catch (Exception e)
+                {
+                    s.IsError = true;
+                    s.Exception = e;
+                }
+            };
+            System.Threading.Tasks.Task.Factory.StartNew(asyncFunction);
+            return s;
+        }
+
+        private void RequestFile(API.FileInfo fileInfo, Stream targetStream, RequestFileAsyncStatus s)
         {
             if (fileInfo == null)
                 throw new ArgumentNullException("fileInfo");
             if (targetStream == null)
                 throw new ArgumentNullException("targetStream");
+            if (s != null) s.Status = RequestFileStatus.RequestingFile;
             SendCommand(Command.GetFile);
             Write(fileInfo);
             if (ReadCommand() == Command.Status_Error)
                 ThrowError();
-            ReadFile(targetStream, fileInfo.Length);
+            if (s != null) s.Status = RequestFileStatus.DownloadingFile;
+            s.DownloadStatus = new ReadFileAsyncStatus();
+            ReadFile(targetStream, fileInfo.Length, s.DownloadStatus);
+            if (s != null) s.Status = RequestFileStatus.Finished;
         }
 
         public void Disconnect()
