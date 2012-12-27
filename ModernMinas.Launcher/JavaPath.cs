@@ -35,12 +35,7 @@ namespace ModernMinas.Launcher
         }
         public static string GetJavaBinaryPath()
         {
-            object obj = JavaPath.GetJavaRegistry().OpenSubKey(JavaPath.GetJavaVersion());
-            if (obj == null)
-            {
-                throw new JavaNotFoundException();
-            }
-            obj = ((RegistryKey)obj).GetValue("JavaHome", null);
+            object obj = JavaPath.GetJavaHome();
             if (obj == null)
             {
                 throw new JavaNotFoundException();
@@ -50,6 +45,7 @@ namespace ModernMinas.Launcher
             {
                 throw new JavaNotFoundException();
             }
+            Console.WriteLine("Java binary path combined: {0}", obj.ToString());
             return obj.ToString();
         }
         public static string GetJavaHome()
@@ -64,19 +60,34 @@ namespace ModernMinas.Launcher
             {
                 throw new JavaNotFoundException();
             }
+            Console.WriteLine("Java home path from registry: {0}", obj.ToString());
             return obj.ToString();
         }
         public static RegistryKey GetJavaRegistry()
         {
+            Console.WriteLine("Detecting java registry...");
+
             if (Registry.LocalMachine.OpenSubKey("Software").OpenSubKey("JavaSoft") == null)
                 throw new JavaNotFoundException();
 
-            RegistryKey registryKey = new[] {
+            var rs = new[] {
                                         Registry.LocalMachine.OpenSubKey("Software").OpenSubKey("JavaSoft").OpenSubKey("Java Development Kit"),
                                         Registry.LocalMachine.OpenSubKey("Software").OpenSubKey("JavaSoft").OpenSubKey("Java Runtime Environment"),
                                         Registry.LocalMachine.OpenSubKey("Software").OpenSubKey("Wow6432Node") != null ? Registry.LocalMachine.OpenSubKey("Software").OpenSubKey("Wow6432Node").OpenSubKey("JavaSoft").OpenSubKey("Java Development Kit") : null,
                                         Registry.LocalMachine.OpenSubKey("Software").OpenSubKey("Wow6432Node") != null ? Registry.LocalMachine.OpenSubKey("Software").OpenSubKey("Wow6432Node").OpenSubKey("JavaSoft").OpenSubKey("Java Runtime Environment") : null,
-            }.Where(r => r != null).FirstOrDefault();
+            }.ToList();
+
+            int u = -1;
+            foreach(var i in rs)
+                Console.WriteLine("\tReading: [{0}] = {1}", ++u, i);
+
+            rs = rs.Where(r => r != null).ToList();
+            u = -1;
+            foreach (var i in rs)
+                Console.WriteLine("\tSorting out: [{0}] = {1}", ++u, i);
+
+            RegistryKey registryKey = rs.FirstOrDefault();
+            Console.WriteLine("\tSelecting: {0}", registryKey);
 
             if (registryKey == null)
                 throw new JavaNotFoundException();
@@ -89,6 +100,7 @@ namespace ModernMinas.Launcher
             {
                 throw new JavaNotFoundException();
             }
+            Console.WriteLine("Current java version read from registry: {0}", value);
             return value.ToString();
         }
     }
