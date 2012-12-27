@@ -1,16 +1,15 @@
-
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2012
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Modern Minas Launcher", "launcher\Launcher.csproj", "{5B32C6CD-C0E1-44F4-8624-562862E32C0F}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Launcher", "launcher\Launcher.csproj", "{5B32C6CD-C0E1-44F4-8624-562862E32C0F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Modern Minas Updater API", "api\Api.csproj", "{542805F0-128C-453B-AB69-9AF44D16F0B3}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Api", "api\Api.csproj", "{542805F0-128C-453B-AB69-9AF44D16F0B3}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Test Update Client", "testclient\TestUpdateClient.csproj", "{05A3C357-95AE-4551-9368-4C91CE149B37}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestUpdateClient", "testclient\TestUpdateClient.csproj", "{05A3C357-95AE-4551-9368-4C91CE149B37}"
 	ProjectSection(ProjectDependencies) = postProject
 		{91A6CFEF-CB01-46F2-B45A-A80E6A1647BD} = {91A6CFEF-CB01-46F2-B45A-A80E6A1647BD}
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Modern Minas Update Server", "server\Server.csproj", "{91A6CFEF-CB01-46F2-B45A-A80E6A1647BD}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Server", "server\Server.csproj", "{91A6CFEF-CB01-46F2-B45A-A80E6A1647BD}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -208,7 +207,6 @@ Global
 		{91A6CFEF-CB01-46F2-B45A-A80E6A1647BD}.CoreOnly|x86.ActiveCfg = Release|x86
 		{91A6CFEF-CB01-46F2-B45A-A80E6A1647BD}.CoreOnly|x86.Build.0 = Release|x86
 		{91A6CFEF-CB01-46F2-B45A-A80E6A1647BD}.Debug|Any CPU.ActiveCfg = Debug|x86
-		{91A6CFEF-CB01-46F2-B45A-A80E6A1647BD}.Debug|Any CPU.Build.0 = Debug|x86
 		{91A6CFEF-CB01-46F2-B45A-A80E6A1647BD}.Debug|Mixed Platforms.ActiveCfg = Debug|x86
 		{91A6CFEF-CB01-46F2-B45A-A80E6A1647BD}.Debug|Mixed Platforms.Build.0 = Debug|x86
 		{91A6CFEF-CB01-46F2-B45A-A80E6A1647BD}.Debug|x86.ActiveCfg = Debug|x86
@@ -234,7 +232,6 @@ Global
 		{91A6CFEF-CB01-46F2-B45A-A80E6A1647BD}.Profile|x86.ActiveCfg = Release|x86
 		{91A6CFEF-CB01-46F2-B45A-A80E6A1647BD}.Profile|x86.Build.0 = Release|x86
 		{91A6CFEF-CB01-46F2-B45A-A80E6A1647BD}.Release|Any CPU.ActiveCfg = Release|x86
-		{91A6CFEF-CB01-46F2-B45A-A80E6A1647BD}.Release|Any CPU.Build.0 = Release|x86
 		{91A6CFEF-CB01-46F2-B45A-A80E6A1647BD}.Release|Mixed Platforms.ActiveCfg = Release|x86
 		{91A6CFEF-CB01-46F2-B45A-A80E6A1647BD}.Release|Mixed Platforms.Build.0 = Release|x86
 		{91A6CFEF-CB01-46F2-B45A-A80E6A1647BD}.Release|x86.ActiveCfg = Release|x86
