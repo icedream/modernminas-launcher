@@ -10,6 +10,8 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace ModernMinas.Launcher
 {
@@ -104,6 +106,32 @@ namespace ModernMinas.Launcher
                 return;
             }
             e.Handled = true;
+        }
+
+        private void Window_Loaded_1(object sender, RoutedEventArgs e)
+        {
+            Task.Factory.StartNew(() =>
+            {
+                try
+                {
+                    var p = JavaPath.CreateJava("-version");
+                    p.StartInfo.RedirectStandardError = true;
+                    p.StartInfo.CreateNoWindow = true;
+                    p.Start();
+                    var versionInfo = p.StandardError.ReadToEnd();
+                    this.Dispatcher.Invoke(new Action(() =>
+                    {
+                        this.JavaDetails.Text = versionInfo;
+                    }));
+                }
+                catch(JavaNotFoundException)
+                {
+                    this.Dispatcher.Invoke(new Action(() =>
+                    {
+                        this.JavaDetails.Text = "Didn't find a working Java installation. The client will not start.";
+                    }));
+                }
+            });
         }
     }
 }

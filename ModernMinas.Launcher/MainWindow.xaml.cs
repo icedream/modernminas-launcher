@@ -345,6 +345,7 @@ namespace ModernMinas.Launcher
             OptionsDialog dlg = new OptionsDialog();
             dlg.MinimumRam = MinimalRam;
             dlg.MaximumRam = MaximalRam;
+            dlg.Hide();
             dlg.ShowDialog();
             if(dlg.ShouldApply)
             {

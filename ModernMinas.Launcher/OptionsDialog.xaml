@@ -1,7 +1,7 @@
 ﻿<Window x:Class="ModernMinas.Launcher.OptionsDialog"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Options" Height="141.824" Width="245.062" Background="LightGray" Icon="Images/Brush.png" ShowInTaskbar="False" ResizeMode="NoResize" WindowStartupLocation="CenterOwner">
+        Title="Options" Height="225.824" Width="245.062" Background="LightGray" Icon="Images/Brush.png" ShowInTaskbar="False" ResizeMode="NoResize" WindowStartupLocation="CenterOwner" WindowStyle="ToolWindow" Visibility="Visible" Loaded="Window_Loaded_1">
     <DockPanel LastChildFill="True">
         <DockPanel LastChildFill="True" DockPanel.Dock="Bottom" Background="Gray">
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
@@ -20,6 +20,9 @@
                 <TextBox Name="MaximalRam" Text="1024" Width="58" VerticalContentAlignment="Center" PreviewTextInput="MaximalRam_PreviewTextInput"></TextBox>
                 <Label>MB</Label>
             </StackPanel>
+            <TextBlock Name="JavaDetails" TextWrapping="Wrap" Text="TextBlock" FontSize="8" Opacity="0.5">
+                (Reading java version...)
+            </TextBlock>
         </StackPanel>
     </DockPanel>
 </Window>
