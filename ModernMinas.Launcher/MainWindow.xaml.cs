@@ -46,18 +46,23 @@ namespace ModernMinas.Launcher
 
         public void SetError(string text)
         {
+            if (!string.IsNullOrEmpty(text))
+                MessageBox.Show(text, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             this.Dispatcher.Invoke(new Action(delegate()
             {
                 this.LoginError.Content = text;
-                Fade(this.ProgressPanel, 0, null, 250.0, (a, b) =>
-                {
-                    this.ProgressPanel.Visibility = System.Windows.Visibility.Collapsed;
-                    this.LoginPanel.Visibility = System.Windows.Visibility.Visible;
-                    this.LoginPanel.Opacity = 0;
-                    this.LoginPanel.Height = this.BottomContentPanel.Height = !string.IsNullOrEmpty(text) ? 84 : 60;
-                    this.LoginError.Visibility = !string.IsNullOrEmpty(text) ? Visibility.Visible : Visibility.Collapsed;
-                    Fade(this.LoginPanel, 1);
-                });
+                if (!string.IsNullOrEmpty(text))
+                    Fade(this.ProgressPanel, 0, null, 250.0, (a, b) =>
+                    {
+                        this.ProgressPanel.Visibility = System.Windows.Visibility.Collapsed;
+                        this.LoginPanel.Visibility = System.Windows.Visibility.Visible;
+                        this.LoginPanel.Opacity = 0;
+                        this.LoginPanel.Height = this.BottomContentPanel.Height = !string.IsNullOrEmpty(text) ? 84 : 60;
+                        this.LoginError.Visibility = !string.IsNullOrEmpty(text) ? Visibility.Visible : Visibility.Collapsed;
+                        Fade(this.LoginPanel, 1);
+                    });
+                else
+                    Fade(this.LoginError, 0, null, 250.0);
             }));
         }
 
@@ -157,12 +162,24 @@ namespace ModernMinas.Launcher
 
         public void StartMinecraft(string username)
         {
-            
+            SetProgress();
+            SetStatus("Cleaning up...");
+            var tmpdir = new System.IO.DirectoryInfo(System.IO.Path.Combine("data", "tmp"));
+            if (tmpdir.Exists)
+                tmpdir.Delete(true);
+            tmpdir.Create();
+
+            SetStatus("Starting client...");
             var javaw = JavaPath.CreateJava(new[] {
                 "-Xms" + MinimalRam + "M",
                 "-Xmx" + MaximalRam + "M",
-                "-Djava.library.path=data/.minecraft/bin/natives",
-                "-cp", "data/.minecraft/bin/minecraft.jar;data/.minecraft/bin/lwjgl.jar;data/.minecraft/bin/lwjgl_util.jar;data/.minecraft/bin/jinput.jar",
+                "-Xincgc",
+                Environment.Is64BitProcess ? "-d64" : "-d32",
+                "-Djava.library.path=data/lib",
+                //"-Djava.io.tmpdir=" + System.IO.Path.Combine(Environment.CurrentDirectory, "data", "tmp"),
+                //"-Duser.home=" + System.IO.Path.Combine(Environment.CurrentDirectory, "data"),
+                //"-Duser.dir=" + System.IO.Path.Combine(Environment.CurrentDirectory, "data"),
+                "-cp", "data/bin/minecraft.jar;data/bin/lwjgl.jar;data/bin/lwjgl_util.jar;data/bin/jinput.jar",
                 "net.minecraft.client.Minecraft",
                 username,
                 l.SessionId,
@@ -176,12 +193,56 @@ namespace ModernMinas.Launcher
                 javaw.StartInfo.EnvironmentVariables["HOME"] = System.IO.Path.Combine(Environment.CurrentDirectory, "data");
             else
                 javaw.StartInfo.EnvironmentVariables.Add("HOME", System.IO.Path.Combine(Environment.CurrentDirectory, "data"));
+#if DEBUG
+            javaw.StartInfo.RedirectStandardError = true;
+            javaw.StartInfo.RedirectStandardOutput = true;
+#endif
+            Console.WriteLine("Starting minecraft, arguments: {0}", javaw.StartInfo.Arguments);
             javaw.Start();
-
+            SetError(null);
             this.Dispatcher.Invoke(new Action(() =>
             {
-                this.Close();
+                this.Hide();
             }));
+
+#if DEBUG
+            System.Threading.Tasks.Task.Factory.StartNew(() =>
+            {
+                string lastError = null;
+                while (!javaw.HasExited)
+                {
+                    lastError = javaw.StandardError.ReadLine();
+                    if (lastError != null) lastError = lastError.Trim();
+                    Console.WriteLine("[Minecraft] STDERR: {0}", lastError);
+                }
+                Console.WriteLine("[Minecraft] End of error stream");
+                if(javaw.ExitCode != 0)
+                    this.Dispatcher.Invoke(new Action(() => SetError(string.Format("Minecraft error code {0}. {1}", javaw.ExitCode, lastError))));
+            });
+            System.Threading.Tasks.Task.Factory.StartNew(() =>
+            {
+                try
+                {
+                    while (!javaw.HasExited && javaw.StandardOutput != null)
+                    {
+                        Console.WriteLine("[Minecraft] STDOUT: {0}", javaw.StandardOutput.ReadLine());
+                    }
+                }
+                catch
+                {
+                    { }
+                }
+                System.Threading.Thread.Sleep(1000);
+                this.Dispatcher.Invoke(new Action(() => this.Close()));
+            });
+#else
+            this.Dispatcher.Invoke(new Action(() =>
+            {
+                this.Dispatcher.Invoke(new Action(() => this.Hide()));
+                javaw.WaitForExit();
+                this.Dispatcher.Invoke(new Action(() => this.Close()));
+            }));
+#endif
         }
 
         public void UpdateMinecraft()
