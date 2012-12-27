@@ -1,5 +1,6 @@
 ﻿using Microsoft.Win32;
 using System;
+using System.Linq;
 using System.Diagnostics;
 using System.IO;
 
@@ -67,26 +68,18 @@ namespace ModernMinas.Launcher
         }
         public static RegistryKey GetJavaRegistry()
         {
-            RegistryKey registryKey = Registry.LocalMachine.OpenSubKey("Software").OpenSubKey("JavaSoft").OpenSubKey("Java Development Kit");
-            if (registryKey == null)
-            {
-                registryKey = Registry.LocalMachine.OpenSubKey("Software").OpenSubKey("JavaSoft").OpenSubKey("Java Runtime Environment");
-            }
-            if (Registry.LocalMachine.OpenSubKey("Software").OpenSubKey("Wow6432Node") != null)
-            {
-                if (registryKey == null)
-                {
-                    registryKey = Registry.LocalMachine.OpenSubKey("Software").OpenSubKey("Wow6432Node").OpenSubKey("JavaSoft").OpenSubKey("Java Development Kit");
-                }
-                if (registryKey == null)
-                {
-                    registryKey = Registry.LocalMachine.OpenSubKey("Software").OpenSubKey("Wow6432Node").OpenSubKey("JavaSoft").OpenSubKey("Java Runtime Environment");
-                }
-            }
-            if (registryKey == null)
-            {
+            if (Registry.LocalMachine.OpenSubKey("Software").OpenSubKey("JavaSoft") == null)
                 throw new JavaNotFoundException();
-            }
+
+            RegistryKey registryKey = new[] {
+                                        Registry.LocalMachine.OpenSubKey("Software").OpenSubKey("JavaSoft").OpenSubKey("Java Development Kit"),
+                                        Registry.LocalMachine.OpenSubKey("Software").OpenSubKey("JavaSoft").OpenSubKey("Java Runtime Environment"),
+                                        Registry.LocalMachine.OpenSubKey("Software").OpenSubKey("Wow6432Node") != null ? Registry.LocalMachine.OpenSubKey("Software").OpenSubKey("Wow6432Node").OpenSubKey("JavaSoft").OpenSubKey("Java Development Kit") : null,
+                                        Registry.LocalMachine.OpenSubKey("Software").OpenSubKey("Wow6432Node") != null ? Registry.LocalMachine.OpenSubKey("Software").OpenSubKey("Wow6432Node").OpenSubKey("JavaSoft").OpenSubKey("Java Runtime Environment") : null,
+            }.Where(r => r != null).FirstOrDefault();
+
+            if (registryKey == null)
+                throw new JavaNotFoundException();
             return registryKey;
         }
         public static string GetJavaVersion()
