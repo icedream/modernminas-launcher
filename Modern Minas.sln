@@ -1,16 +1,16 @@
-﻿
+
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2012
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ModernMinas.Launcher", "ModernMinas.Launcher\ModernMinas.Launcher.csproj", "{5B32C6CD-C0E1-44F4-8624-562862E32C0F}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Modern Minas Launcher", "launcher\Launcher.csproj", "{5B32C6CD-C0E1-44F4-8624-562862E32C0F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Updater API", "updateapi\Updater API.csproj", "{542805F0-128C-453B-AB69-9AF44D16F0B3}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Modern Minas Updater API", "api\Api.csproj", "{542805F0-128C-453B-AB69-9AF44D16F0B3}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestUpdateClient", "TestUpdateClient\TestUpdateClient.csproj", "{05A3C357-95AE-4551-9368-4C91CE149B37}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Test Update Client", "testclient\TestUpdateClient.csproj", "{05A3C357-95AE-4551-9368-4C91CE149B37}"
 	ProjectSection(ProjectDependencies) = postProject
 		{91A6CFEF-CB01-46F2-B45A-A80E6A1647BD} = {91A6CFEF-CB01-46F2-B45A-A80E6A1647BD}
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Update Server", "updateserv\Update Server.csproj", "{91A6CFEF-CB01-46F2-B45A-A80E6A1647BD}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Modern Minas Update Server", "server\Server.csproj", "{91A6CFEF-CB01-46F2-B45A-A80E6A1647BD}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
