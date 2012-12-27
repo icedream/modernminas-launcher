@@ -24,10 +24,7 @@ namespace ModernMinas.Launcher
                     FileName = Path.Combine(JavaPath.GetJavaBinaryPath(), binary),
                     Arguments = JavaPath.CombineParameters(parameters),
                     UseShellExecute = false,
-                    WindowStyle = ProcessWindowStyle.Hidden,
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                    RedirectStandardInput = true
+                    WindowStyle = ProcessWindowStyle.Hidden
                 }
             };
         }
