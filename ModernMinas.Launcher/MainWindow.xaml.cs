@@ -158,7 +158,7 @@ namespace ModernMinas.Launcher
         public void StartMinecraft(string username)
         {
             
-            var javaw = JavaPath.CreateJavaW(new[] {
+            var javaw = JavaPath.CreateJava(new[] {
                 "-Xms" + MinimalRam + "M",
                 "-Xmx" + MaximalRam + "M",
                 "-Djava.library.path=data/.minecraft/bin/natives",
