@@ -27,8 +27,7 @@ namespace ModernMinas.Launcher
     {
         MinecraftLogin l = new MinecraftLogin();
 
-        int MinimalRam = 512;
-        int MaximalRam = 1024;
+        FileSize MaximalRam = FileSize.FromGigabytes(1);
 
         public MainWindow()
         {
@@ -171,8 +170,7 @@ namespace ModernMinas.Launcher
 
             SetStatus("Starting client...");
             var javaw = JavaPath.CreateJava(new[] {
-                "-Xms" + MinimalRam + "M",
-                "-Xmx" + MaximalRam + "M",
+                "-Xmx" + MaximalRam.ToMegabytes() + "M",
                 "-Xincgc",
                 Environment.Is64BitProcess ? "-d64" : "-d32",
                 "-Djava.library.path=data/lib",
@@ -404,13 +402,11 @@ namespace ModernMinas.Launcher
         private void OptionsButton_Click(object sender, RoutedEventArgs e)
         {
             OptionsDialog dlg = new OptionsDialog();
-            dlg.MinimumRam = MinimalRam;
             dlg.MaximumRam = MaximalRam;
             dlg.Hide();
             dlg.ShowDialog();
             if(dlg.ShouldApply)
             {
-                MinimalRam = dlg.MinimumRam;
                 MaximalRam = dlg.MaximumRam;
             }
         }

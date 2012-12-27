@@ -23,10 +23,34 @@ namespace ModernMinas.Launcher
         public OptionsDialog()
         {
             InitializeComponent();
+
+            RefreshBoxes();
+        }
+
+        public void RefreshBoxes()
+        {
+            for (
+                var fs = FileSize.FromMegabytes(256);
+                fs < FileSize.FromGigabytes(8);
+                fs += FileSize.FromMegabytes(
+                    fs < FileSize.FromGigabytes(1) ? 128
+                    : fs < FileSize.FromGigabytes(2) ? 256
+                    : fs < FileSize.FromGigabytes(4) ? 512
+                    : 1024
+                )
+            )
+            {
+                this.Dispatcher.Invoke(new Action(() =>
+                {
+                    this.MaximalRam.Items.Add(new FileSize(fs));
+                    Console.WriteLine("Added {0} to list", fs);
+                }));
+            }
         }
 
         public void Set(FrameworkElement elem, DependencyProperty prop, object value)
         {
+            Console.WriteLine("Set {0}.{1} = {2}", elem.Name, prop.Name, value);
             elem.Dispatcher.Invoke(new Action(() => {
                 elem.SetValue(prop, value);
             }));
@@ -40,27 +64,15 @@ namespace ModernMinas.Launcher
             }));
         }
 
-        public int MaximumRam
+        public FileSize MaximumRam
         {
             get
             {
-                return Convert.ToInt32(Get(this.MaximalRam, TextBox.TextProperty).ToString());
+                return (FileSize)Get(this.MaximalRam, ComboBox.SelectedItemProperty);
             }
             set
             {
-                Set(this.MaximalRam, TextBox.TextProperty, value.ToString());
-            }
-        }
-
-        public int MinimumRam
-        {
-            get
-            {
-                return Convert.ToInt32(Get(this.MinimalRam, TextBox.TextProperty).ToString());
-            }
-            set
-            {
-                Set(this.MinimalRam, TextBox.TextProperty, value.ToString());
+                Set(this.MaximalRam, ComboBox.SelectedItemProperty, value);
             }
         }
 
@@ -74,38 +86,6 @@ namespace ModernMinas.Launcher
         {
             ShouldApply = sender == OKButton;
             Close();
-        }
-
-        private void MaximalRam_PreviewTextInput(object sender, TextCompositionEventArgs e)
-        {
-            int i = -1;
-            if (!int.TryParse(e.Text, out i))
-            {
-                e.Handled = false;
-                return;
-            }
-            if (i < MinimumRam)
-            {
-                e.Handled = false;
-                return;
-            }
-            e.Handled = true;
-        }
-
-        private void MinimalRam_PreviewTextInput(object sender, TextCompositionEventArgs e)
-        {
-            int i = -1;
-            if (!int.TryParse(e.Text, out i))
-            {
-                e.Handled = false;
-                return;
-            }
-            if (i > MaximumRam)
-            {
-                e.Handled = false;
-                return;
-            }
-            e.Handled = true;
         }
 
         private void Window_Loaded_1(object sender, RoutedEventArgs e)
