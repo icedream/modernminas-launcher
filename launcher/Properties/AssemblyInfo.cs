@@ -1,4 +1,4 @@
-﻿using System.Reflection;
+using System.Reflection;
 using System.Resources;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -8,7 +8,7 @@ using System.Windows;
 // Attribute gesteuert. Ändern Sie diese Attributwerte, um die Informationen zu ändern,
 // die mit einer Assembly verknüpft sind.
 [assembly: AssemblyTitle("Modern Minas Launcher")]
-[assembly: AssemblyDescription("")]
+[assembly: AssemblyDescription("Updates and launches the Minecraft modification for the Modern Minas server.")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Icedream & Railcrafti")]
 [assembly: AssemblyProduct("Modern Minas")]
@@ -51,5 +51,5 @@ using System.Windows;
 // Sie können alle Werte angeben oder die standardmäßigen Build- und Revisionsnummern 
 // übernehmen, indem Sie "*" eingeben:
 // [assembly: AssemblyVersion("1.0.*")]
-[assembly: AssemblyVersion("2.0.*")]
-[assembly: AssemblyFileVersion("2.0")]
+[assembly: AssemblyVersion("2.1.*")]
+[assembly: AssemblyFileVersion("2.1")]
