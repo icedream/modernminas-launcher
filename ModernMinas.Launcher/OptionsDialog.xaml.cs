@@ -119,6 +119,8 @@ namespace ModernMinas.Launcher
                     p.StartInfo.CreateNoWindow = true;
                     p.Start();
                     var versionInfo = p.StandardError.ReadToEnd();
+                    versionInfo += Environment.NewLine;
+                    versionInfo += p.StartInfo.FileName;
                     this.Dispatcher.Invoke(new Action(() =>
                     {
                         this.JavaDetails.Text = versionInfo;
