@@ -176,7 +176,6 @@ namespace ModernMinas.Launcher
                 javaw.StartInfo.EnvironmentVariables["HOME"] = System.IO.Path.Combine(Environment.CurrentDirectory, "data");
             else
                 javaw.StartInfo.EnvironmentVariables.Add("HOME", System.IO.Path.Combine(Environment.CurrentDirectory, "data"));
-            MessageBox.Show(javaw.StartInfo.Arguments);
             javaw.Start();
 
             this.Dispatcher.Invoke(new Action(() =>
