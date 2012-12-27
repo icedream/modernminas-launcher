@@ -15,7 +15,7 @@
                 <ComboBox Name="MaximalRam" Text="1024" Width="70" VerticalContentAlignment="Center" HorizontalContentAlignment="Right"></ComboBox>
                 <Label>MB</Label>
             </StackPanel>
-            <TextBlock Name="JavaDetails" TextWrapping="Wrap" Text="TextBlock" FontSize="8" Opacity="0.5">
+            <TextBlock Name="JavaDetails" TextWrapping="Wrap" FontSize="8" Opacity="0.5">
                 (Reading java version...)
             </TextBlock>
         </StackPanel>
