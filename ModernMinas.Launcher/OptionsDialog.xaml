@@ -12,7 +12,7 @@
         <StackPanel Orientation="Vertical" Margin="5">
             <StackPanel Orientation="Horizontal">
                 <Label Width="117" Name="MaximalRamLabel">Max. RAM</Label>
-                <ComboBox Name="MaximalRam" Text="1024" Width="82" VerticalContentAlignment="Center" HorizontalContentAlignment="Right"></ComboBox>
+                <ComboBox Name="MaximalRam" Text="1024" Width="70" VerticalContentAlignment="Center" HorizontalContentAlignment="Right"></ComboBox>
                 <Label>MB</Label>
             </StackPanel>
             <TextBlock Name="JavaDetails" TextWrapping="Wrap" Text="TextBlock" FontSize="8" Opacity="0.5">
