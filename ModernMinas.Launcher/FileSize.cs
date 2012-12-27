@@ -8,6 +8,7 @@ namespace ModernMinas.Launcher
     /// <summary>
     /// Represents a file size.
     /// </summary>
+    [Serializable]
     public class FileSize
     {
         public static readonly FileSize kB = 1024;

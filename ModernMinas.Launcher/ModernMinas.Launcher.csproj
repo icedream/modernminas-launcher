@@ -58,6 +58,8 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="Configuration.cs" />
+    <Compile Include="Crypto.cs" />
     <Compile Include="FileSize.cs" />
     <Compile Include="ValidationRules\PositiveIntegerRule.cs" />
     <Page Include="MainWindow.xaml">

@@ -25,13 +25,31 @@ namespace ModernMinas.Launcher
     /// </summary>
     public partial class MainWindow : Window
     {
+        const string UseSavedPasswordMagic = "\x00\xff\x00\xff\x00\xff\x00\xff";
+        const string ConfigFileName = "config.dat";
+
         MinecraftLogin l = new MinecraftLogin();
 
-        FileSize MaximalRam = FileSize.FromGigabytes(1);
+        Configuration config;
 
         public MainWindow()
         {
             InitializeComponent();
+
+            if (System.IO.File.Exists(ConfigFileName))
+                try
+                {
+                    config = Configuration.LoadFromFile(ConfigFileName);
+                }
+                catch
+                {
+                    config = new Configuration();
+                }
+            if (config == null)
+                config = new Configuration();
+
+            this.Password.Password = config.Password != null && config.Password.Length > 0 ? UseSavedPasswordMagic : string.Empty;
+            this.Username.Text = config.Username;
         }
 
         public void SetStatus(string text)
@@ -115,37 +133,43 @@ namespace ModernMinas.Launcher
                 ProgressPanel.Visibility = System.Windows.Visibility.Visible;
                 ProgressPanel.Opacity = 0;
                 Fade(ProgressPanel, 1, null, 250); //, (c, d) => {
+                config.Username = Username.Text;
+                config.Password = System.Runtime.InteropServices.Marshal.PtrToStringBSTR(System.Runtime.InteropServices.Marshal.SecureStringToBSTR(Password.SecurePassword)).StartsWith("\x00\xff") ? config.Password : Password.SecurePassword;
                 System.Threading.Tasks.Task.Factory.StartNew(
-                    new Action<object>(Login_SepThread),
-                    new object[] { this.Username.Text, this.Password.SecurePassword }
+                    new Action(Login_SepThread)
                 );
             });
         }
         
-        private void Login_SepThread(object o)
-        {
-            object[] s = (object[])o;
-            Login_SepThread(s[0].ToString(), (SecureString)s[1]);
-        }
-        private void Login_SepThread(string f, SecureString g)
+        private void Login_SepThread()
         {
             try
             {
-                Login(f, g);
+                Login();
                 UpdateMinecraft();
-                StartMinecraft(f);
+                SaveLoginDetails();
+                StartMinecraft();
             }
             catch (Exception err)
             {
-                SetError(err.Message);
+                SetError(err.Message
+#if DEBUG
+                    + Environment.NewLine
+                    + Environment.NewLine
+                    + err.StackTrace
+#endif
+                    );
             }
         }
-
-        public void Login(string username, SecureString password)
+        public void SaveLoginDetails()
+        {
+            config.SaveToFile(ConfigFileName);
+        }
+        public void Login()
         {
             SetProgress();
             SetStatus("Logging in...");
-            if(!l.Login(username, password))
+            if (!l.Login(config.Username, config.Password))
             {
                 if(l.LastError is WebException)
                 {
@@ -159,7 +183,7 @@ namespace ModernMinas.Launcher
             SetStatus("Login succeeded!");
         }
 
-        public void StartMinecraft(string username)
+        public void StartMinecraft()
         {
             SetProgress();
             SetStatus("Cleaning up...");
@@ -170,7 +194,7 @@ namespace ModernMinas.Launcher
 
             SetStatus("Starting client...");
             var javaw = JavaPath.CreateJava(new[] {
-                "-Xmx" + MaximalRam.ToMegabytes() + "M",
+                "-Xmx" + config.MaximalRam.ToMegabytes() + "M",
                 "-Xincgc",
                 Environment.Is64BitProcess ? "-d64" : "-d32",
                 "-Djava.library.path=data/lib",
@@ -179,7 +203,7 @@ namespace ModernMinas.Launcher
                 //"-Duser.dir=" + System.IO.Path.Combine(Environment.CurrentDirectory, "data"),
                 "-cp", "data/bin/minecraft.jar;data/bin/lwjgl.jar;data/bin/lwjgl_util.jar;data/bin/jinput.jar",
                 "net.minecraft.client.Minecraft",
-                username,
+                config.Username,
                 l.SessionId,
                 "minas.mc.modernminas.tk:25565"
             });
@@ -194,6 +218,7 @@ namespace ModernMinas.Launcher
 #if DEBUG
             javaw.StartInfo.RedirectStandardError = true;
             javaw.StartInfo.RedirectStandardOutput = true;
+            javaw.StartInfo.CreateNoWindow = true;
 #endif
             Console.WriteLine("Starting minecraft, arguments: {0}", javaw.StartInfo.Arguments);
             javaw.Start();
@@ -271,7 +296,8 @@ namespace ModernMinas.Launcher
                 System.IO.FileInfo fi = new System.IO.FileInfo(System.IO.Path.Combine(f.Directory.GetAbsolutePath(baseDir.FullName), f.Name));
                 Console.WriteLine("Download: {0}", fi.FullName);
                 fi.Directory.Create();
-                var status = updater.RequestFileAsync(f, fi.Create());
+                var fis = fi.Create();
+                var status = updater.RequestFileAsync(f, fis);
                 while (status.Status != RequestFileStatus.Finished)
                 {
                     System.Threading.Thread.Sleep(100);
@@ -296,6 +322,9 @@ namespace ModernMinas.Launcher
                             break;
                     }
                 }
+                fis.Flush();
+                fis.Close();
+                fis.Dispose();
                 ou += f.Length;
             }
             updater.Disconnect();
@@ -402,13 +431,11 @@ namespace ModernMinas.Launcher
         private void OptionsButton_Click(object sender, RoutedEventArgs e)
         {
             OptionsDialog dlg = new OptionsDialog();
-            dlg.MaximumRam = MaximalRam;
+            dlg.MaximumRam = config.MaximalRam;
             dlg.Hide();
             dlg.ShowDialog();
             if(dlg.ShouldApply)
-            {
-                MaximalRam = dlg.MaximumRam;
-            }
+                config.MaximalRam = dlg.MaximumRam;
         }
     }
 }
