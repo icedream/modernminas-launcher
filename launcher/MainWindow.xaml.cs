@@ -169,18 +169,23 @@ namespace ModernMinas.Launcher
         {
             SetProgress();
             SetStatus("Logging in...");
-            if (!l.Login(config.Username, config.Password))
+            foreach(string apiUrl in new[] { "http://login.modernminas.tk/", "http://login.minecraft.net/" })
             {
-                if(l.LastError is WebException)
-                {
-                    throw new Exception(((WebException)l.LastError).Message.Split(new[]{": "}, StringSplitOptions.RemoveEmptyEntries).Last());
-                }
-                else
-                {
-                    throw l.LastError;
-                }
+                l = new MinecraftLogin(new Uri(apiUrl));
+                Console.WriteLine("[Login] API url: {0}", apiUrl);
+                bool success = l.Login(config.Username, config.Password);
+                Console.WriteLine("[Login] Succeeded: {0}", success);
+                Console.WriteLine("[Login] Last error: {0}", l.LastError);
+                if (success)
+                    break;
             }
-            SetStatus("Login succeeded!");
+            if(l.LastError != null)
+                if (l.LastError is WebException)
+                    throw new Exception(((WebException)l.LastError).Message.Split(new[] { ": " }, StringSplitOptions.RemoveEmptyEntries).Last());
+                else
+                    throw l.LastError;
+            else
+                SetStatus("Login succeeded!");
         }
 
         public void StartMinecraft()
