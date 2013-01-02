@@ -19,6 +19,27 @@ namespace ModernMinas.UpdateServer
 
         public IPEndPoint EndPoint { get; set; }
 
+        private void SendDirectoryInfo(DirectoryInfo di)
+        {
+            foreach(var d in di.Directories)
+            {
+                SendCommand(Command.Directory);
+                WriteString(d.Name);
+                WriteInt64(d.LastWriteTimeUtc.ToBinary());
+                SendDirectoryInfo(d);
+            }
+
+            foreach(var f in di.Files)
+            {
+                SendCommand(Command.File);
+                WriteString(f.Name);
+                WriteInt64(f.LastWriteTimeUtc.ToBinary());
+                WriteInt64(f.Length);
+            }
+
+            SendCommand(Command.EndOfDirectory);
+        }
+
         public void Handle()
         {
             try
@@ -45,7 +66,7 @@ namespace ModernMinas.UpdateServer
                             {
                                 SendCommand(Command.Status_OK);
                                 Console.WriteLine("[{0}] Sending back directory info...", EndPoint);
-                                Write(DirectoryInfo.FromIODirectoryInfo(new System.IO.DirectoryInfo("files")));
+                                SendDirectoryInfo(DirectoryInfo.FromIODirectoryInfo(new System.IO.DirectoryInfo("files")));
                                 Console.WriteLine("[{0}] Done", EndPoint);
                             }
                             break;

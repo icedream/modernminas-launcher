@@ -12,7 +12,7 @@ using ProtoBuf.Meta;
 
 namespace ModernMinas.Launcher.API
 {
-    [ProtocolVersion(2)]
+    [ProtocolVersion(3)]
     public class Connection
     {
         protected NetworkStream _nstream;
@@ -332,12 +332,46 @@ namespace ModernMinas.Launcher.API
                 ThrowError();
         }
 
-        public API.DirectoryInfo RequestFileList()
+        public DirectoryInfo RequestFileList()
         {
             SendCommand(Command.FileList);
             if (ReadCommand() == Command.Status_Error)
                 ThrowError();
-            return Read<API.DirectoryInfo>();
+            return ReadRemoteDir("files", DateTime.Now.ToBinary());
+        }
+
+        private DirectoryInfo ReadRemoteDir(string name, long dtbin, DirectoryInfo parent = null)
+        {
+            Console.WriteLine("Remote dir: {0}", name);
+            DirectoryInfo di = new DirectoryInfo();
+            di.Name = name;
+            di.LastWriteTimeUtc = DateTime.FromBinary(dtbin);
+            di.Parent = parent;
+            Command cmd;
+            while((cmd = ReadCommand()) != Command.EndOfDirectory)
+            {
+                switch(cmd)
+                {
+                    case Command.Directory:
+                        string dname = ReadString();
+                        long ddtbin = ReadInt64();
+                        di.Directories.Add(ReadRemoteDir(dname, ddtbin, di));
+                        break;
+                    case Command.File:
+                        var f = new FileInfo();
+                        f.Name = ReadString();
+                        f.LastWriteTimeUtc = DateTime.FromBinary(ReadInt64());
+                        f.Length = ReadInt64();
+                        f.Directory = di;
+                        Console.WriteLine("Remote file: {0}", f.Name);
+                        di.Files.Add(f);
+                        break;
+                    default:
+                        throw new InvalidOperationException("Unexpected data in update stream");
+                }
+            }
+            Console.WriteLine("End of remote dir: {0}", name);
+            return di;
         }
 
         public void RequestFile(API.FileInfo fileInfo, Stream targetStream)

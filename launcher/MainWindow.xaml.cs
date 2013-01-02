@@ -153,11 +153,9 @@ namespace ModernMinas.Launcher
             catch (Exception err)
             {
                 SetError(err.Message
-#if DEBUG
                     + Environment.NewLine
                     + Environment.NewLine
                     + err.StackTrace
-#endif
                     );
             }
         }
@@ -192,7 +190,7 @@ namespace ModernMinas.Launcher
         {
             SetProgress();
             SetStatus("Cleaning up...");
-            var tmpdir = new System.IO.DirectoryInfo(System.IO.Path.Combine("data", "tmp"));
+            var tmpdir = new System.IO.DirectoryInfo(System.IO.Path.Combine(App.GamePath, "tmp"));
             if (tmpdir.Exists)
                 tmpdir.Delete(true);
             tmpdir.Create();
@@ -202,24 +200,28 @@ namespace ModernMinas.Launcher
                 "-Xmx" + config.MaximalRam.ToMegabytes() + "M",
                 "-Xincgc",
                 Environment.Is64BitProcess ? "-d64" : "-d32",
-                "-Djava.library.path=data/lib",
-                //"-Djava.io.tmpdir=" + System.IO.Path.Combine(Environment.CurrentDirectory, "data", "tmp"),
-                //"-Duser.home=" + System.IO.Path.Combine(Environment.CurrentDirectory, "data"),
-                //"-Duser.dir=" + System.IO.Path.Combine(Environment.CurrentDirectory, "data"),
-                "-cp", "data/bin/minecraft.jar;data/bin/lwjgl.jar;data/bin/lwjgl_util.jar;data/bin/jinput.jar",
+                "-Djava.library.path=lib",
+                "-Djava.io.tmpdir=" + System.IO.Path.Combine(App.GamePath, "tmp"),
+                "-cp", string.Join(";", new[] {
+                    "bin/minecraft.jar",
+                    "bin/lwjgl.jar",
+                    "bin/lwjgl_util.jar",
+                    "bin/jinput.jar"
+                }),
                 "net.minecraft.client.Minecraft",
                 config.Username,
                 l.SessionId,
                 "minas.mc.modernminas.tk:25565"
             });
+            javaw.StartInfo.WorkingDirectory = App.GamePath;
             if (javaw.StartInfo.EnvironmentVariables.ContainsKey("APPDATA"))
-                javaw.StartInfo.EnvironmentVariables["APPDATA"] = System.IO.Path.Combine(Environment.CurrentDirectory, "data");
+                javaw.StartInfo.EnvironmentVariables["APPDATA"] = App.GamePath;
             else
-                javaw.StartInfo.EnvironmentVariables.Add("APPDATA", System.IO.Path.Combine(Environment.CurrentDirectory, "data"));
+                javaw.StartInfo.EnvironmentVariables.Add("APPDATA", App.GamePath);
             if (javaw.StartInfo.EnvironmentVariables.ContainsKey("HOME"))
-                javaw.StartInfo.EnvironmentVariables["HOME"] = System.IO.Path.Combine(Environment.CurrentDirectory, "data");
+                javaw.StartInfo.EnvironmentVariables["HOME"] = App.GamePath;
             else
-                javaw.StartInfo.EnvironmentVariables.Add("HOME", System.IO.Path.Combine(Environment.CurrentDirectory, "data"));
+                javaw.StartInfo.EnvironmentVariables.Add("HOME", App.GamePath);
 #if DEBUG
             javaw.StartInfo.RedirectStandardError = true;
             javaw.StartInfo.RedirectStandardOutput = true;
@@ -287,7 +289,7 @@ namespace ModernMinas.Launcher
             var repository = updater.RequestFileList();
             List<FileInfo> filesToUpdate = new List<FileInfo>();
             List<System.IO.FileInfo> filesToDelete = new List<System.IO.FileInfo>();
-            var baseDir = new System.IO.DirectoryInfo("data");
+            var baseDir = new System.IO.DirectoryInfo(App.GamePath);
             baseDir.Create();
             CheckUpdateDir(repository, baseDir, ref filesToUpdate, ref filesToDelete);
 
@@ -360,7 +362,7 @@ namespace ModernMinas.Launcher
         {
             foreach (var f in remote.Files)
                 if(!f.Name.StartsWith(".mm-sys"))
-                    CheckUpdateFile(f, new System.IO.FileInfo(f.GetAbsolutePath("data")), ref filesToUpdate);
+                    CheckUpdateFile(f, new System.IO.FileInfo(f.GetAbsolutePath(App.GamePath)), ref filesToUpdate);
             if(remote.Files.Select(f => f.Name).Contains(".mm-sys.delete"))
                 foreach (var f in
                         from file in local.GetFiles()

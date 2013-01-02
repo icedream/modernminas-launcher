@@ -10,11 +10,13 @@ namespace ModernMinas.Launcher.API
         Status_OK = 0x00,
         Status_Error = 0x01,
         Status_FileNotFound = 0x0a,
-        //Status_DirectoryNotFound = 0x0b,
-        //Status_QuittingConnection = 0x0f,
 
         FileList = 0x10,
         GetFile = 0x11,
+
+        File = 0x20,
+        Directory = 0x21,
+        EndOfDirectory = 0x2a,
 
         Quitting = 0xef,
 

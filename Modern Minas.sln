@@ -181,7 +181,6 @@ Global
 		{05A3C357-95AE-4551-9368-4C91CE149B37}.Profile|x86.ActiveCfg = Release|x86
 		{05A3C357-95AE-4551-9368-4C91CE149B37}.Profile|x86.Build.0 = Release|x86
 		{05A3C357-95AE-4551-9368-4C91CE149B37}.Release|Any CPU.ActiveCfg = Release|x86
-		{05A3C357-95AE-4551-9368-4C91CE149B37}.Release|Any CPU.Build.0 = Release|x86
 		{05A3C357-95AE-4551-9368-4C91CE149B37}.Release|Mixed Platforms.ActiveCfg = Release|x86
 		{05A3C357-95AE-4551-9368-4C91CE149B37}.Release|Mixed Platforms.Build.0 = Release|x86
 		{05A3C357-95AE-4551-9368-4C91CE149B37}.Release|x86.ActiveCfg = Release|x86
