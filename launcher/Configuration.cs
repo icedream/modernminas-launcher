@@ -32,7 +32,7 @@ namespace ModernMinas.Launcher
         {
             try
             {
-                JavaHomePath = JavaPath.GetJavaHome();
+                JavaHomePath = JavaPath.GetJavaBinaryPath();
                 MaximalRam = FileSize.FromGigabytes(1);
                 //GamePath = Environment.CurrentDirectory;
                 Username = string.Empty;

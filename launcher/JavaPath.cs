@@ -35,6 +35,26 @@ namespace ModernMinas.Launcher
         }
         public static string GetJavaBinaryPath()
         {
+            if (Environment.OSVersion.Platform == PlatformID.Win32NT || Environment.OSVersion.Platform == PlatformID.Win32Windows)
+            {
+                Console.WriteLine("This is Windows, so we are parsing %path%...");
+                string path = Environment.GetEnvironmentVariable("PATH");
+                foreach (string singlepath in path.Split(';'))
+                {
+                    Console.WriteLine(singlepath);
+                    if (File.Exists(Path.Combine(singlepath, "java.exe")))
+                    {
+                        string homepath = Path.GetFullPath(singlepath);
+                        Console.WriteLine("=> Contains java, using as bin path", homepath);
+                        return homepath;
+                    }
+                    else
+                        Console.WriteLine("=> Does not contain java.");
+                }
+            }
+            else
+                Console.WriteLine("This is not Windows, don't use Windows path parsing.");
+
             object obj = JavaPath.GetJavaHome();
             if (obj == null)
             {
