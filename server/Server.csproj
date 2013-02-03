@@ -50,7 +50,7 @@
   <ItemGroup>
     <ProjectReference Include="..\api\Api.csproj">
       <Project>{542805F0-128C-453B-AB69-9AF44D16F0B3}</Project>
-      <Name>Updater API</Name>
+      <Name>Api</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

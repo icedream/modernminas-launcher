@@ -1,7 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Net;
 using System.Net.Sockets;
 using System.Windows;
@@ -28,6 +31,7 @@ namespace ModernMinas.Launcher
         const string UseSavedPasswordMagic = "\x00\xff\x00\xff\x00\xff\x00\xff";
         const string ConfigFileName = "config.dat";
 
+        MinecraftStatusWindow w = new MinecraftStatusWindow();
         MinecraftLogin l = new MinecraftLogin();
 
         Configuration config;
@@ -47,6 +51,11 @@ namespace ModernMinas.Launcher
                 }
             if (config == null)
                 config = new Configuration();
+
+            w.Name = "StatusWindow";
+            w.Opacity = 0;
+            w.Background = Brushes.Transparent;
+            w.Show();
 
             this.Password.Password = config.Password != null && config.Password.Length > 0 ? UseSavedPasswordMagic : string.Empty;
             this.Username.Text = config.Username;
@@ -135,12 +144,16 @@ namespace ModernMinas.Launcher
                 Fade(ProgressPanel, 1, null, 250); //, (c, d) => {
                 config.Username = Username.Text;
                 config.Password = System.Runtime.InteropServices.Marshal.PtrToStringBSTR(System.Runtime.InteropServices.Marshal.SecureStringToBSTR(Password.SecurePassword)).StartsWith("\x00\xff") ? config.Password : Password.SecurePassword;
-                System.Threading.Tasks.Task.Factory.StartNew(
-                    new Action(Login_SepThread)
+                var thr = new System.Threading.Thread(
+                    new System.Threading.ThreadStart(Login_SepThread)
                 );
+                thr.SetApartmentState(System.Threading.ApartmentState.STA);
+                thr.IsBackground = true;
+                thr.Start();
             });
         }
         
+        [STAThread]
         private void Login_SepThread()
         {
             try
@@ -170,10 +183,10 @@ namespace ModernMinas.Launcher
             foreach(string apiUrl in new[] { "http://login.modernminas.tk/", "http://login.minecraft.net/" })
             {
                 l = new MinecraftLogin(new Uri(apiUrl));
-                Console.WriteLine("[Login] API url: {0}", apiUrl);
+                Debug.WriteLine("[Login] API url: {0}", apiUrl, null);
                 bool success = l.Login(config.Username, config.Password);
-                Console.WriteLine("[Login] Succeeded: {0}", success);
-                Console.WriteLine("[Login] Last error: {0}", l.LastError);
+                Debug.WriteLine("[Login] Succeeded: {0}", success, null);
+                Debug.WriteLine("[Login] Last error: {0}", l.LastError, null);
                 if (success)
                     break;
             }
@@ -186,6 +199,7 @@ namespace ModernMinas.Launcher
                 SetStatus("Login succeeded!");
         }
 
+        [STAThread]
         public void StartMinecraft()
         {
             SetProgress();
@@ -202,12 +216,7 @@ namespace ModernMinas.Launcher
                 Environment.Is64BitProcess ? "-d64" : "-d32",
                 "-Djava.library.path=lib",
                 "-Djava.io.tmpdir=" + System.IO.Path.Combine(App.GamePath, "tmp"),
-                "-cp", string.Join(";", new[] {
-                    "bin/minecraft.jar",
-                    "bin/lwjgl.jar",
-                    "bin/lwjgl_util.jar",
-                    "bin/jinput.jar"
-                }),
+                "-cp", string.Join(";", from file in (new System.IO.DirectoryInfo(Launcher.App.GameBinPath).GetFiles()) where file.Extension.EndsWith("jar", StringComparison.OrdinalIgnoreCase) select System.IO.Path.Combine("bin", file.Name)),
                 "net.minecraft.client.Minecraft",
                 config.Username,
                 l.SessionId,
@@ -222,12 +231,10 @@ namespace ModernMinas.Launcher
                 javaw.StartInfo.EnvironmentVariables["HOME"] = App.GamePath;
             else
                 javaw.StartInfo.EnvironmentVariables.Add("HOME", App.GamePath);
-#if DEBUG
             javaw.StartInfo.RedirectStandardError = true;
             javaw.StartInfo.RedirectStandardOutput = true;
             javaw.StartInfo.CreateNoWindow = true;
-#endif
-            Console.WriteLine("Starting minecraft, arguments: {0}", javaw.StartInfo.Arguments);
+            Debug.WriteLine("Starting minecraft, arguments: {0}", javaw.StartInfo.Arguments, null);
             javaw.Start();
             SetError(null);
             this.Dispatcher.Invoke(new Action(() =>
@@ -235,44 +242,180 @@ namespace ModernMinas.Launcher
                 this.Hide();
             }));
 
-#if DEBUG
-            System.Threading.Tasks.Task.Factory.StartNew(() =>
+            
+            System.Threading.Tasks.Task.Factory.StartNew(
+                () =>
+                {
+                    while (!javaw.HasExited)
+                    {
+                        RefreshStatusWindowPos();
+                        System.Threading.Thread.Sleep(250);
+                    }
+                });
+
+            // STDERR
+            System.Threading.Tasks.Task.Factory.StartNew(
+                () =>
             {
+
                 string lastError = null;
                 while (!javaw.HasExited)
                 {
+
                     lastError = javaw.StandardError.ReadLine();
                     if (lastError != null) lastError = lastError.Trim();
-                    Console.WriteLine("[Minecraft] STDERR: {0}", lastError);
+                    Debug.WriteLine("[Minecraft] STDERR: {0}", lastError, null);
+
+                    if (lastError == null)
+                        continue;
+
+                    if (lastError.Contains("early MinecraftForge initialization"))
+                        this.Dispatcher.Invoke(new Action(() => { w.Show(); w.Fade(1.0, null, 250); }));
+                    else if (lastError.Contains("/panorama"))
+                        this.Dispatcher.Invoke(new Action(() => w.Fade(0.0, null, 10, (EventHandler)((sender, e) => { w.Hide(); }))));
+
+                    lastError = string.Join(" ", lastError.Split(' ').Skip(3));
+
+                    // loading text
+                    Match m;
+                    if ((m = Regex.Match(lastError, "setupTexture: \"(.+)\"")).Success)
+                        lastError = "Loading texture: " + m.Groups[1].Value;
+                        //lastError = "Loading textures...";
+                    else if (lastError.Contains("[STDOUT] Checking for new version"))
+                        lastError = "Checking for Optifine updates...";
+                    else if (lastError.Contains("Connecting"))
+                        lastError = "Connecting to the server...";
+                    else if ((m = Regex.Match(lastError, "TextureFX registered: (.+)")).Success)
+                        lastError = "Loading texture effects...";
+                    else if ((m = Regex.Match(lastError, "TextureFX removed: (.+)")).Success)
+                        lastError = "Unloading texture effects...";
+                    else if ((m = Regex.Match(lastError, "Loading custom colors: (.+)")).Success)
+                        lastError = "Loading custom colors...";
+                    else if ((m = Regex.Match(lastError, "\\[(.+)\\] (Initializing|Starting|Loading|Attempting|Config) ([^\\s]+) .*")).Success)
+                        switch (m.Groups[1].Value)
+                        {
+                            case "STDOUT":
+                                if (m.Groups[3].Value.Length < 3)
+                                    continue;
+                                lastError = "Loading " + m.Groups[3].Value + "...";
+                                break;
+                            default:
+                                lastError = "Loading " + m.Groups[1].Value.Replace("ForgeModLoader", "Forge") + "...";
+                                break;
+                        }
+                    else if ((m = Regex.Match(lastError, "\\[ForgeModLoader\\] Searching .*")).Success)
+                        lastError = "Loading modifications...";
+                    else if ((m = Regex.Match(lastError, "\\(Audiotori\\) .+")).Success)
+                        lastError = "Loading audio system...";
+                    else if ((m = Regex.Match(lastError, "\\(ATSystem\\) Performing .+")).Success)
+                        lastError = "Loading sounds...";
+                    else
+                        continue;
+
+
+                    this.Dispatcher.Invoke(new Action(() => w.SetStatus(lastError)));
                 }
-                Console.WriteLine("[Minecraft] End of error stream");
+                Debug.WriteLine("[Minecraft] End of error stream");
                 if(javaw.ExitCode != 0)
                     this.Dispatcher.Invoke(new Action(() => SetError(string.Format("Minecraft error code {0}. {1}", javaw.ExitCode, lastError))));
-            });
+            }, System.Threading.Tasks.TaskCreationOptions.AttachedToParent);
+
+            // STDOUT
             System.Threading.Tasks.Task.Factory.StartNew(() =>
             {
-                try
-                {
-                    while (!javaw.HasExited && javaw.StandardOutput != null)
+                    while(!javaw.HasExited)
                     {
-                        Console.WriteLine("[Minecraft] STDOUT: {0}", javaw.StandardOutput.ReadLine());
+                        var lastError = javaw.StandardOutput.ReadLine();
+                        if (lastError != null) lastError = lastError.Trim();
+                        Debug.WriteLine("[Minecraft] STDOUT: {0}", lastError, null);
+
+                        if (lastError == null)
+                            continue;
+
+                        if (lastError.Contains("early MinecraftForge initialization"))
+                            this.Dispatcher.Invoke(new Action(() => { w.Show(); w.Fade(1.0, null, 250); }));
+                        else if (lastError.Contains("/panorama"))
+                            this.Dispatcher.Invoke(new Action(() => w.Fade(0.0, null, 10, (EventHandler)((sender, e) => { w.Hide(); }))));
+
+                        lastError = string.Join(" ", lastError.Split(' ').Skip(3));
+
+                        // loading text
+                        Match m;
+                        if ((m = Regex.Match(lastError, "setupTexture: \"(.+)\"")).Success)
+                            lastError = "Loading texture: " + m.Groups[1].Value;
+                        else if ((m = Regex.Match(lastError, "TextureFX registered: (.+)")).Success)
+                            lastError = "Loading texture effects...";
+                        else if ((m = Regex.Match(lastError, "TextureFX removed: (.+)")).Success)
+                            lastError = "Unloading texture effects...";
+                        else if ((m = Regex.Match(lastError, "Loading custom colors: (.+)")).Success)
+                            lastError = "Loading custom colors...";
+                        else if ((m = Regex.Match(lastError, "\\[(.+)\\] (Initializing|Starting)")).Success)
+                            lastError = "Loading " + m.Groups[1].Value + "...";
+                        else if ((m = Regex.Match(lastError, "\\(Audiotori\\) .+")).Success)
+                            lastError = "Loading audio system...";
+                        else if ((m = Regex.Match(lastError, "\\(ATSystem\\) Performing .+")).Success)
+                            lastError = "Loading sounds...";
+                        else
+                            continue;
+
+
+                        this.Dispatcher.Invoke(new Action(() => w.SetStatus(lastError)));
                     }
-                }
-                catch
-                {
-                    { }
-                }
                 System.Threading.Thread.Sleep(1000);
-                this.Dispatcher.Invoke(new Action(() => this.Close()));
+                this.Dispatcher.Invoke(new Action(() => { this.Close(); Environment.Exit(0); }));
             });
-#else
+        }
+
+        private void RefreshStatusWindowPos()
+        {
+            IntPtr ptr = new IntPtr(FindWindow(null, "Minecraft"));
+#if !NO_STATUS_INTPTR_ZERO_TEST
+            if (ptr == IntPtr.Zero)
+                return;
+#endif
+            Rect pos = new Rect();
+            GetWindowRect(ptr, ref pos);
+            SetStatusWindow(pos);
+        }
+
+        private void SetStatusWindow(Rect pos)
+        {
             this.Dispatcher.Invoke(new Action(() =>
             {
-                this.Dispatcher.Invoke(new Action(() => this.Hide()));
-                javaw.WaitForExit();
-                this.Dispatcher.Invoke(new Action(() => this.Close()));
-            }));
+                //pos.Left -= (int)SystemParameters.VirtualScreenLeft;
+                //pos.Top -= (int)SystemParameters.VirtualScreenTop;
+#if !NO_STATUS_WINDOW_TEST
+                if (pos.Right - pos.Left < 1)
+                    return;
+                if (pos.Bottom - pos.Top < 1)
+                    return;
 #endif
+#if NO_STATUS_IF_SCREEN_OVERSIZED
+                if (pos.Right - pos.Left > SystemParameters.VirtualScreenWidth)
+                    return;
+                if (pos.Bottom - pos.Top > SystemParameters.VirtualScreenHeight)
+                    return;
+#endif
+                var size = new Size(pos.Right - pos.Left, pos.Bottom - pos.Top);
+#if STATUS_WINDOW_DEBUG
+                Debug.Write(" with L");
+                Debug.Write(pos.Left);
+                Debug.Write(" x T");
+                Debug.Write(pos.Top);
+                Debug.Write(" x R");
+                Debug.Write(pos.Right);
+                Debug.Write(" x B");
+                Debug.Write(pos.Bottom);
+                Debug.Write(" (Size is W");
+                Debug.Write(size.Width);
+                Debug.Write(" x H");
+                Debug.Write(size.Height);
+                Debug.Write(")");
+#endif
+                w.Left = pos.Left;
+                w.Width = size.Width;
+                w.Top = pos.Top + (size.Height / 1.5);
+            }));
         }
 
         public void UpdateMinecraft()
@@ -301,7 +444,7 @@ namespace ModernMinas.Launcher
             {
                 SetProgress((int)(ou / 1024));
                 System.IO.FileInfo fi = new System.IO.FileInfo(System.IO.Path.Combine(f.Directory.GetAbsolutePath(baseDir.FullName), f.Name));
-                Console.WriteLine("Download: {0}", fi.FullName);
+                Debug.WriteLine("Download: {0}", fi.FullName, null);
                 fi.Directory.Create();
                 var fis = fi.Create();
                 var status = updater.RequestFileAsync(f, fis);
@@ -370,7 +513,7 @@ namespace ModernMinas.Launcher
                         select file
                     )
                 {
-                    Console.WriteLine("Needs deletion: {0}", local.FullName);
+                    Debug.WriteLine("Needs deletion: {0}", local.FullName, null);
                     filesToDelete.Add(f);
                 }
             foreach (var d in remote.Directories)
@@ -381,11 +524,11 @@ namespace ModernMinas.Launcher
         {
             if (!local.Exists || !local.Length.Equals(remote.Length) || local.LastWriteTimeUtc < remote.LastWriteTimeUtc)
             {
-                Console.WriteLine();
-                //Console.WriteLine("Local file: {0}, {1} bytes, {2}", local.Name, local.Length, local.LastWriteTimeUtc);
-                Console.WriteLine("Remote file: {0}, {1} bytes, {2}", remote.Name, remote.Length, remote.LastWriteTimeUtc);
+                Debug.WriteLine(null);
+                //Debug.WriteLine("Local file: {0}, {1} bytes, {2}", local.Name, local.Length, local.LastWriteTimeUtc);
+                Debug.WriteLine("Remote file: {0}, {1} bytes, {2}", remote.Name, remote.Length, remote.LastWriteTimeUtc);
                 filesToUpdate.Add(remote);
-                Console.WriteLine("=> Needs update");
+                Debug.WriteLine("=> Needs update");
             }
         }
 
@@ -443,6 +586,33 @@ namespace ModernMinas.Launcher
             dlg.ShowDialog();
             if(dlg.ShouldApply)
                 config.MaximalRam = dlg.MaximumRam;
+        }
+
+        [DllImport("user32.dll")]
+        static extern bool GetWindowRect(IntPtr hwnd, ref Rect rectangle);
+
+        [DllImport("user32.dll")]
+        static extern int GetWindowText(IntPtr hwnd, string lpString, int nMaxCount);
+
+        [DllImport("user32.dll")]
+        static extern bool EnumWindows(EnumWindowsProc lpEnumFunc, IntPtr lParam);
+
+        [DllImport("user32.dll", CharSet = CharSet.Auto)]
+        static extern int FindWindow(string lpClassName, string lpWindowName);
+        
+        [DllImport("user32.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        static extern bool EnumChildWindows(IntPtr hwndParent, EnumWindowsProc lpEnumFunc, IntPtr lParam);
+        
+        delegate bool EnumWindowsProc(IntPtr hWnd, IntPtr lParam);
+
+        [StructLayout(LayoutKind.Sequential)]
+        struct Rect
+        {
+            public int Left { get; set; }
+            public int Top { get; set; }
+            public int Right { get; set; }
+            public int Bottom { get; set; }
         }
     }
 }
