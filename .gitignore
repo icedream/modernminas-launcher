@@ -8,4 +8,7 @@ obj
 
 # mstest test results
 TestResults
+
+# others
 /libraries
+/packages
