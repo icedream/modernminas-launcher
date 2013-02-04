@@ -31,7 +31,7 @@ namespace ModernMinas.Launcher
         {
             this.Status.Dispatcher.Invoke(new Action(delegate
             {
-                this.Status.Content = text.Replace("_", "__"); // fix accidental mnemonics
+                this.Status.Text = text.Replace("_", "__"); // fix accidental mnemonics
                 this.Status.UpdateLayout();
             }));
         }

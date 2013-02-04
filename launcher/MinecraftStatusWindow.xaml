@@ -5,10 +5,16 @@
         Title="MinecraftStatusWindow" Height="48" Width="640" ResizeMode="NoResize" SizeToContent="Height" Topmost="True" WindowStartupLocation="CenterScreen" FontFamily="Tahoma" FontSize="11" AllowsTransparency="True" WindowStyle="None" ShowInTaskbar="False" ShowActivated="False" Background="{x:Null}">
     <DockPanel LastChildFill="True">
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
-            <Image Name="WaitingLogo" Height="48" Width="48" gif:ImageBehavior.AnimatedSource="Images/deviantArt/rotatingBlocks/minecraft_diamond_block_by_ldaxin-d3f5blw.gif" />
-            <Label Name="Status" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Opacity="0.5" FontFamily="Arial" FontSize="16">
-                Please wait...
-            </Label>
+            <Image Name="WaitingLogo" Height="48" Width="48" gif:ImageBehavior.AnimateInDesignMode="True" gif:ImageBehavior.AnimatedSource="Images/deviantArt/rotatingBlocks/minecraft_diamond_block_by_ldaxin-d3f5blw.gif" >
+                <Image.Effect>
+                    <DropShadowEffect BlurRadius="15" Opacity="0.6" RenderingBias="Quality" ShadowDepth="0" Color="#FF7C7C7C"/>
+                </Image.Effect>
+            </Image>
+            <TextBlock Name="Status" Text="Please wait..." Height="16" Opacity="0.5" FontFamily="Arial" FontSize="16" Foreground="#FF959595" FontWeight="Bold" TextAlignment="Center">
+                <TextBlock.Effect>
+                    <DropShadowEffect Opacity="0.2" ShadowDepth="0"/>
+                </TextBlock.Effect>
+            </TextBlock>
         </StackPanel>
     </DockPanel>
 </Window>
