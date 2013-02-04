@@ -327,9 +327,9 @@ namespace ModernMinas.Launcher
                     if (lastError != null) lastError = lastError.Trim();
                     Debug.WriteLine("[Minecraft] STDERR: {0}", lastError, null);
                     
-#if STATUS_WINDOW
                     if (lastError == null)
                         continue;
+#if STATUS_WINDOW
 
                     if (lastError.Contains("early MinecraftForge initialization"))
                         this.Dispatcher.Invoke(new Action(() => { w.Show(); w.Fade(1.0, null, 250); }));
