@@ -18,6 +18,8 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.Security;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace ModernMinas.Launcher
 {
@@ -56,6 +58,27 @@ namespace ModernMinas.Launcher
             w.Opacity = 0;
             w.Background = Brushes.Transparent;
 
+            // Image gallery
+            Task.Factory.StartNew(() =>
+            {
+                var urls =
+                    (
+                        from url in (new WebClient()).DownloadString("http://modernminas.tk/img/gallery/launcher/").Split('\n')
+                        where !string.IsNullOrEmpty(url) && !string.IsNullOrWhiteSpace(url)
+                        select url
+                        ).Randomize();
+                while ((bool)this.Dispatcher.Invoke(new Func<bool>(() => { return this.IsVisible; })))
+                {
+                    foreach (string url in urls)
+                    {
+                        System.Threading.Thread.Sleep(5000);
+                        this.Dispatcher.Invoke(new Action(() => { this.ContentPanel.Background = new ImageBrush(new BitmapImage(new Uri(url))); }));
+                    }
+                }
+                
+            });
+
+            // Logo animation
             this.Dispatcher.Invoke(new Action(() =>
             {
 
@@ -275,6 +298,8 @@ namespace ModernMinas.Launcher
                 this.Hide();
             }));
 
+#if STATUS_WINDOW
+#warning Status window eats a high amount of CPU on a single core. Not recommended for release.
             // Status window
             System.Threading.Tasks.Task.Factory.StartNew(
                 () =>
@@ -283,13 +308,11 @@ namespace ModernMinas.Launcher
                     while (!javaw.HasExited)
                     {
                         RefreshStatusWindowPos();
-                        if ((double)this.Dispatcher.Invoke(new Func<double>(() => (double)w.Dispatcher.Invoke(new Func<double>(() => { return w.Status.Opacity; })))) > 0) // Simply check the opacity of the status
-                            System.Threading.Thread.Sleep(50); // Fast refresh if visible
-                        else
-                            System.Threading.Thread.Sleep(750); // Slow refresh if visible
+                        System.Threading.Thread.Sleep(750); // Slow refresh if visible
                     }
                     this.Dispatcher.Invoke(new Action(w.Close));
                 });
+#endif
 
             // STDERR
             System.Threading.Tasks.Task.Factory.StartNew(
@@ -303,7 +326,8 @@ namespace ModernMinas.Launcher
                     lastError = javaw.StandardError.ReadLine();
                     if (lastError != null) lastError = lastError.Trim();
                     Debug.WriteLine("[Minecraft] STDERR: {0}", lastError, null);
-
+                    
+#if STATUS_WINDOW
                     if (lastError == null)
                         continue;
 
@@ -311,9 +335,11 @@ namespace ModernMinas.Launcher
                         this.Dispatcher.Invoke(new Action(() => { w.Show(); w.Fade(1.0, null, 250); }));
                     else if (lastError.Contains("/panorama"))
                         this.Dispatcher.Invoke(new Action(() => w.Fade(0.0, null, 10, (EventHandler)((sender, e) => { w.Hide(); }))));
+#endif
 
                     lastError = string.Join(" ", lastError.Split(' ').Skip(3));
 
+#if STATUS_WINDOW
                     // loading text
                     Match m;
                     if ((m = Regex.Match(lastError, "setupTexture: \"(.+)\"")).Success)
@@ -349,7 +375,7 @@ namespace ModernMinas.Launcher
                         lastError = "Loading sounds...";
                     else
                         continue;
-
+#endif
 
                     this.Dispatcher.Invoke(new Action(() => w.SetStatus(lastError)));
                 }
@@ -373,14 +399,17 @@ namespace ModernMinas.Launcher
 
                         if (lastError == null)
                             continue;
-
+                        
+#if STATUS_WINDOW
                         if (lastError.Contains("early MinecraftForge initialization"))
                             this.Dispatcher.Invoke(new Action(() => { w.Show(); w.Fade(1.0, null, 250); }));
                         else if (lastError.Contains("/panorama"))
                             this.Dispatcher.Invoke(new Action(() => w.Fade(0.0, null, 10, (EventHandler)((sender, e) => { w.Hide(); }))));
+#endif
 
                         lastError = string.Join(" ", lastError.Split(' ').Skip(3));
-
+                        
+#if STATUS_WINDOW
                         // loading text
                         Match m;
                         if ((m = Regex.Match(lastError, "setupTexture: \"(.+)\"")).Success)
@@ -400,13 +429,14 @@ namespace ModernMinas.Launcher
                             lastError = "Loading sounds...";
                         else
                             continue;
-
+#endif
 
                         this.Dispatcher.Invoke(new Action(() => w.SetStatus(lastError)));
                     }
             });
         }
 
+#if STATUS_WINDOW
         private void RefreshStatusWindowPos()
         {
             IntPtr ptr = new IntPtr(FindWindow(null, "Minecraft"));
@@ -458,6 +488,7 @@ namespace ModernMinas.Launcher
                 w.Top = pos.Top + (size.Height / 1.5);
             }));
         }
+#endif
 
         public void UpdateMinecraft()
         {

@@ -10,7 +10,7 @@
                     <DropShadowEffect BlurRadius="15" Opacity="0.6" RenderingBias="Quality" ShadowDepth="0" Color="#FF7C7C7C"/>
                 </Image.Effect>
             </Image>
-            <TextBlock Name="Status" Text="Please wait..." Height="16" Opacity="0.5" FontFamily="Arial" FontSize="16" Foreground="#FF959595" FontWeight="Bold" TextAlignment="Center">
+            <TextBlock Name="Status" Margin="5,0,0,0" Text="Please wait..." Height="22" Opacity="0.5" FontFamily="Arial" FontSize="16" Foreground="#FF959595" FontWeight="Bold" TextAlignment="Center">
                 <TextBlock.Effect>
                     <DropShadowEffect Opacity="0.2" ShadowDepth="0"/>
                 </TextBlock.Effect>
