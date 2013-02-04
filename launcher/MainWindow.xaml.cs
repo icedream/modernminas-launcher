@@ -55,7 +55,40 @@ namespace ModernMinas.Launcher
             w.Name = "StatusWindow";
             w.Opacity = 0;
             w.Background = Brushes.Transparent;
-            w.Show();
+
+            this.Dispatcher.Invoke(new Action(() =>
+            {
+
+                Storyboard storyboard = new Storyboard();
+                TimeSpan duration = TimeSpan.FromSeconds(8);
+
+                DoubleAnimation animation = new DoubleAnimation();
+                animation.Duration = new Duration(duration);
+
+                var easing = new SineEase();
+                easing.EasingMode = EasingMode.EaseInOut;
+                animation.EasingFunction = easing;
+
+                //Storyboard.SetTarget(animation, (System.Windows.Media.Effects.DropShadowEffect)this.Logo.Effect);
+                //Storyboard.SetTargetProperty(animation, new PropertyPath(System.Windows.Media.Effects.DropShadowEffect.BlurRadiusProperty));
+                Storyboard.SetTarget(animation, this.Logo);
+                Storyboard.SetTargetProperty(animation, new PropertyPath(Control.WidthProperty));
+                storyboard.Children.Add(animation);
+
+                storyboard.Completed += (sender, e) =>
+                {
+                    // Reverse animation range...
+                    var a = animation.From;
+                    animation.From = animation.To;
+                    animation.To = a;
+                    // ...and start!
+                    storyboard.Begin();
+                };
+
+                animation.From = this.Logo.Width - 10;
+                animation.To = this.Logo.Width;
+                storyboard.Begin();
+            }));
 
             this.Password.Password = config.Password != null && config.Password.Length > 0 ? UseSavedPasswordMagic : string.Empty;
             this.Username.Text = config.Username;
@@ -242,15 +275,20 @@ namespace ModernMinas.Launcher
                 this.Hide();
             }));
 
-            
+            // Status window
             System.Threading.Tasks.Task.Factory.StartNew(
                 () =>
                 {
+                    this.Dispatcher.Invoke(new Action(w.Show));
                     while (!javaw.HasExited)
                     {
                         RefreshStatusWindowPos();
-                        System.Threading.Thread.Sleep(250);
+                        if ((double)this.Dispatcher.Invoke(new Func<double>(() => (double)w.Dispatcher.Invoke(new Func<double>(() => { return w.Status.Opacity; })))) > 0) // Simply check the opacity of the status
+                            System.Threading.Thread.Sleep(50); // Fast refresh if visible
+                        else
+                            System.Threading.Thread.Sleep(750); // Slow refresh if visible
                     }
+                    this.Dispatcher.Invoke(new Action(w.Close));
                 });
 
             // STDERR
@@ -316,8 +354,12 @@ namespace ModernMinas.Launcher
                     this.Dispatcher.Invoke(new Action(() => w.SetStatus(lastError)));
                 }
                 Debug.WriteLine("[Minecraft] End of error stream");
-                if(javaw.ExitCode != 0)
+
+                // Error handling
+                if (javaw.ExitCode != 0 /* No error at all */
+                    && javaw.ExitCode != -1 /* Closed via clicking "X" */)
                     this.Dispatcher.Invoke(new Action(() => SetError(string.Format("Minecraft error code {0}. {1}", javaw.ExitCode, lastError))));
+                this.Dispatcher.Invoke(new Action(() => { this.Close(); Environment.Exit(0); }));
             }, System.Threading.Tasks.TaskCreationOptions.AttachedToParent);
 
             // STDOUT
@@ -343,6 +385,7 @@ namespace ModernMinas.Launcher
                         Match m;
                         if ((m = Regex.Match(lastError, "setupTexture: \"(.+)\"")).Success)
                             lastError = "Loading texture: " + m.Groups[1].Value;
+                            //lastError = "Loading textures...";
                         else if ((m = Regex.Match(lastError, "TextureFX registered: (.+)")).Success)
                             lastError = "Loading texture effects...";
                         else if ((m = Regex.Match(lastError, "TextureFX removed: (.+)")).Success)
@@ -361,8 +404,6 @@ namespace ModernMinas.Launcher
 
                         this.Dispatcher.Invoke(new Action(() => w.SetStatus(lastError)));
                     }
-                System.Threading.Thread.Sleep(1000);
-                this.Dispatcher.Invoke(new Action(() => { this.Close(); Environment.Exit(0); }));
             });
         }
 
@@ -613,6 +654,11 @@ namespace ModernMinas.Launcher
             public int Top { get; set; }
             public int Right { get; set; }
             public int Bottom { get; set; }
+        }
+
+        private void Main_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+        {
+            w.Close(); // Fix for main thread not quitting
         }
     }
 }

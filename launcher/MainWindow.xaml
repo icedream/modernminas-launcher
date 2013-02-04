@@ -2,11 +2,15 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Modern Minas" Height="400" Width="687"
-        Background="DarkGray" Foreground="White" Name="Main" Loaded="MainWindow_Loaded" MinWidth="685" MinHeight="80" Initialized="Main_Initialized" IsVisibleChanged="Main_IsVisibleChanged" ContentRendered="Main_ContentRendered" Icon="Images/MMsymbol.ICO">
+        Background="DarkGray" Foreground="White" Name="Main" Loaded="MainWindow_Loaded" MinWidth="685" MinHeight="80" Initialized="Main_Initialized" IsVisibleChanged="Main_IsVisibleChanged" ContentRendered="Main_ContentRendered" Icon="Images/MMsymbol.ICO" Closing="Main_Closing">
     <Grid>
         <DockPanel Name="MainPanel" HorizontalAlignment="Stretch" Margin="0,0,0,0" VerticalAlignment="Stretch">
             <DockPanel Name="BottomPanel" DockPanel.Dock="Bottom" Background="Black" Height="80">
-                <Image DockPanel.Dock="Right" Name="Logo" Margin="10" Stretch="Uniform" Width="180" Source="Images/MMtransp.png" />
+                <Image DockPanel.Dock="Right" Name="Logo" Margin="10" Stretch="Uniform" Width="180" Source="Images/MMtransp.png" >
+                    <Image.Effect>
+                        <DropShadowEffect Color="#FF22D322" BlurRadius="0" ShadowDepth="0"/>
+                    </Image.Effect>
+                </Image>
                 <StackPanel Name="BottomContentPanel">
                     <StackPanel Name="LoginPanel" Visibility="Visible" Orientation="Horizontal">
                         <StackPanel Name="LoginInputPanel" Width="340">
