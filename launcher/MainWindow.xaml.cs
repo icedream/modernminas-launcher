@@ -63,7 +63,7 @@ namespace ModernMinas.Launcher
             {
                 var urls =
                     (
-                        from url in (new WebClient()).DownloadString("http://modernminas.tk/img/gallery/launcher/").Split('\n')
+                        from url in (new WebClient()).DownloadString("http://www.modernminas.de/img/gallery/launcher/").Split('\n')
                         where !string.IsNullOrEmpty(url) && !string.IsNullOrWhiteSpace(url)
                         select url
                         ).Randomize();
@@ -221,6 +221,7 @@ namespace ModernMinas.Launcher
             }
             catch (Exception err)
             {
+                Console.WriteLine(err);
                 SetError(err.Message
                     + Environment.NewLine
                     + Environment.NewLine
@@ -236,7 +237,7 @@ namespace ModernMinas.Launcher
         {
             SetProgress();
             SetStatus("Logging in...");
-            foreach(string apiUrl in new[] { "http://login.modernminas.tk/", "http://login.minecraft.net/" })
+            foreach(string apiUrl in new[] { "http://login.modernminas.de/", "http://login.minecraft.net/" })
             {
                 l = new MinecraftLogin(new Uri(apiUrl));
                 Debug.WriteLine("[Login] API url: {0}", apiUrl, null);
@@ -276,7 +277,7 @@ namespace ModernMinas.Launcher
                 "net.minecraft.client.Minecraft",
                 config.Username,
                 l.SessionId,
-                "minas.mc.modernminas.tk:25565"
+                "minas.mc.modernminas.de:25565"
             });
             javaw.StartInfo.WorkingDirectory = App.GamePath;
             if (javaw.StartInfo.EnvironmentVariables.ContainsKey("APPDATA"))
@@ -495,7 +496,7 @@ namespace ModernMinas.Launcher
             // Connect to update server
             SetProgress();
             SetStatus("Connecting to update server...");
-            TcpClient tcp = new TcpClient("minas.mc.modernminas.tk", 25555);
+            TcpClient tcp = new TcpClient("update.modernminas.de", 25555);
             var ns = tcp.GetStream();
             var updater = new Connection(ns);
             updater.SendProtocolVersion(); // Check if protocol version fits

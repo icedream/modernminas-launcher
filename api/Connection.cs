@@ -249,8 +249,10 @@ namespace ModernMinas.Launcher.API
                 }
                 catch (Exception e)
                 {
+                    Console.WriteLine("ReadFile exception handled: {0}", e.ToString());
                     s.IsError = true;
                     s.Exception = e;
+                    throw e;
                 }
             };
             System.Threading.Tasks.Task.Factory.StartNew(asyncFunction);
@@ -258,54 +260,55 @@ namespace ModernMinas.Launcher.API
         }
         protected void ReadFile(Stream targetStream, long length, ReadFileAsyncStatus stat = null)
         {
-            // TODO: Implement IsBusy check for ReadFileAsync
+                // TODO: Status set for errors
+                // TODO: Implement IsBusy check for ReadFileAsync
 
-            if (stat != null)
-            {
-                stat.BytesTotal = length;
-                stat.Status = ReadFileStatus.Preparing;
-            }
-
-            var _cstream
-                = new SharpCompress.Compressor.LZMA.LzmaStream(
-                    ReadBytes(5),
-                    _bstream
-                  );
-
-            byte[] buffer = new byte[8 * 1024];
-            int buffRead = buffer.Length;
-
-            if (stat != null)
-                stat.Status = ReadFileStatus.Downloading;
-
-            do
-            {
-                var dt = DateTime.Now;
-                var read = _cstream.Read(buffer, 0, (int)Math.Min(
-                        // Use rest of needed bytes if smaller than buffer length
-                        length != -1
-                            ? length - _cstream.Position
-                            : buffer.Length,
-
-                        // Otherwise use buffer length
-                        buffer.Length
-                    ));
                 if (stat != null)
                 {
-                    stat.BytesPerSecond = read / DateTime.Now.Subtract(dt).TotalSeconds;
-                    stat.BytesRead += read;
+                    stat.BytesTotal = length;
+                    stat.Status = ReadFileStatus.Preparing;
                 }
-                targetStream.Write(buffer, 0, read);
-            }
-            while (_cstream.Position < length);
 
-            targetStream.Flush();
+                var _cstream
+                    = new SharpCompress.Compressor.LZMA.LzmaStream(
+                        ReadBytes(5),
+                        _bstream
+                      );
 
-            _cstream.Close();
-            _cstream.Dispose();
+                byte[] buffer = new byte[8 * 1024];
+                int buffRead = buffer.Length;
 
-            while (_nstream.DataAvailable)
-                Console.WriteLine("[!] Trashing {0} bytes.", _bstream.Read(buffer, 0, buffer.Length));
+                if (stat != null)
+                    stat.Status = ReadFileStatus.Downloading;
+
+                do
+                {
+                    var dt = DateTime.Now;
+                    var read = _cstream.Read(buffer, 0, (int)Math.Min(
+                        // Use rest of needed bytes if smaller than buffer length
+                            length != -1
+                                ? length - _cstream.Position
+                                : buffer.Length,
+
+                            // Otherwise use buffer length
+                            buffer.Length
+                        ));
+                    if (stat != null)
+                    {
+                        stat.BytesPerSecond = read / DateTime.Now.Subtract(dt).TotalSeconds;
+                        stat.BytesRead += read;
+                    }
+                    targetStream.Write(buffer, 0, read);
+                }
+                while (_cstream.Position < length);
+
+                targetStream.Flush();
+
+                _cstream.Close();
+                _cstream.Dispose();
+
+                while (_nstream.DataAvailable)
+                    Console.WriteLine("[!] Trashing {0} bytes.", _bstream.Read(buffer, 0, buffer.Length));
         }
 
         protected void SendCommand(Command cmd)

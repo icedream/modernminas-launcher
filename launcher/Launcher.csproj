@@ -18,7 +18,7 @@
     <IsWebBootstrapper>true</IsWebBootstrapper>
     <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\</SolutionDir>
     <RestorePackages>true</RestorePackages>
-    <PublishUrl>ftp://176.28.52.170/</PublishUrl>
+    <PublishUrl>ftp://modernminas_update:thisisafuckinglongpassword%40176.28.55.118/</PublishUrl>
     <Install>true</Install>
     <InstallFrom>Web</InstallFrom>
     <UpdateEnabled>true</UpdateEnabled>
@@ -28,9 +28,9 @@
     <UpdatePeriodically>false</UpdatePeriodically>
     <UpdateRequired>false</UpdateRequired>
     <MapFileExtensions>true</MapFileExtensions>
-    <InstallUrl>http://update.modernminas.tk/</InstallUrl>
-    <SupportUrl>http://support.modernminas.tk/</SupportUrl>
-    <ErrorReportUrl>http://bugs.modernminas.tk/</ErrorReportUrl>
+    <InstallUrl>http://update.modernminas.de/</InstallUrl>
+    <SupportUrl>http://support.modernminas.de/</SupportUrl>
+    <ErrorReportUrl>http://bugs.modernminas.de/</ErrorReportUrl>
     <TargetCulture>en</TargetCulture>
     <ProductName>Modern Minas Launcher</ProductName>
     <PublisherName>Modern Minas</PublisherName>
@@ -38,7 +38,7 @@
     <CreateWebPageOnPublish>true</CreateWebPageOnPublish>
     <WebPage>index.html</WebPage>
     <TrustUrlParameters>true</TrustUrlParameters>
-    <ApplicationRevision>19</ApplicationRevision>
+    <ApplicationRevision>20</ApplicationRevision>
     <ApplicationVersion>2.1.0.%2a</ApplicationVersion>
     <UseApplicationTrust>true</UseApplicationTrust>
     <CreateDesktopShortcut>true</CreateDesktopShortcut>
