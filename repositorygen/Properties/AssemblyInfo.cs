@@ -5,12 +5,12 @@ using System.Runtime.InteropServices;
 // Allgemeine Informationen über eine Assembly werden über die folgenden 
 // Attribute gesteuert. Ändern Sie diese Attributwerte, um die Informationen zu ändern,
 // die mit einer Assembly verknüpft sind.
-[assembly: AssemblyTitle("Modern Minas Update API")]
+[assembly: AssemblyTitle("RepositoryGen")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("Modern Minas")]
-[assembly: AssemblyProduct("Modern Minas")]
-[assembly: AssemblyCopyright("© 2013 Icedream")]
+[assembly: AssemblyCompany("")]
+[assembly: AssemblyProduct("RepositoryGen")]
+[assembly: AssemblyCopyright("Copyright ©  2013")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -20,7 +20,7 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 
 // Die folgende GUID bestimmt die ID der Typbibliothek, wenn dieses Projekt für COM verfügbar gemacht wird
-[assembly: Guid("e47468db-71ad-41f9-9eb1-0a287d4b3b7a")]
+[assembly: Guid("8d088be2-ac34-4a4b-9fed-3063453f4fd9")]
 
 // Versionsinformationen für eine Assembly bestehen aus den folgenden vier Werten:
 //
@@ -32,5 +32,5 @@ using System.Runtime.InteropServices;
 // Sie können alle Werte angeben oder die standardmäßigen Build- und Revisionsnummern 
 // übernehmen, indem Sie "*" eingeben:
 // [assembly: AssemblyVersion("1.0.*")]
-[assembly: AssemblyVersion("2.0.*")]
-[assembly: AssemblyFileVersion("2.0")]
+[assembly: AssemblyVersion("1.0.0.0")]
+[assembly: AssemblyFileVersion("1.0.0.0")]

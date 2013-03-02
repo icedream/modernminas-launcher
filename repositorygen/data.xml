@@ -1,0 +1,470 @@
+﻿<data>
+	<repository>
+		<package id="minecraft-client">
+			<name>Minecraft Client</name>
+			<version>1.4.7</version>
+			<version_underscores>1_4_7</version_underscores>
+			<description>The client for the Minecraft game.</description>
+			<dependencies>
+				<package id="lwjgl" />
+				<package id="lwjgl_util" />
+			</dependencies>
+			<source>
+				<resolver type="download">
+					<url>http://assets.minecraft.net/%{VERSION_UNDERSCORES}/minecraft.jar</url>
+				</resolver>
+				<resolver type="archive" />
+			</source>
+			<install>
+				<inject targetpath="bin/minecraft.jar" />
+			</install>
+			<uninstall>
+				<delete targetpath="bin/minecraft.jar" />
+			</uninstall>
+      <startup-classpath priority="50" path="bin/minecraft.jar" />
+		</package>
+		<package id="lwjgl">
+			<name>LWJGL</name>
+			<version>2.8.5</version>
+			<description>Leightweight Java Game Library</description>
+			<dependencies>
+				<package id="lwjgl-platform" />
+				<package id="jinput" />
+			</dependencies>
+			<source>
+				<!--
+				<resolver type="maven-download">
+					<groupId>org.lwjgl.lwjgl</groupId>
+					<artifactId>lwjgl</artifactId>
+					<version>%{VERSION}</version>
+				</resolver>
+				-->
+				<resolver type="download">
+					<url>http://repo1.maven.org/maven2/org/lwjgl/lwjgl/%{ID}/%{VERSION}/%{ID}-%{VERSION}.jar</url>
+				</resolver>
+        <resolver type="archive" />
+			</source>
+      <install>
+        <inject targetpath="bin/%{ID}.jar" />
+      </install>
+      <uninstall>
+        <delete targetpath="bin/%{ID}.jar" />
+      </uninstall>
+      <startup-classpath path="bin/%{ID}.jar" priority="40" />
+		</package>
+		<package id="lwjgl-platform">
+			<name>LWJGL Native Binaries</name>
+			<version>2.8.5</version>
+			<description>Binary files for LWJGL</description>
+			<source>
+				<!--
+				<resolver type="maven-download">
+					<groupId>org.lwjgl.lwjgl</groupId>
+					<artifactId>lwjgl-platform</artifactId>
+					<version>%{VERSION}</version>
+				</resolver>
+				-->
+				<resolver type="download">
+					<url>http://repo1.maven.org/maven2/org/lwjgl/lwjgl/%{ID}/%{VERSION}/%{ID}-%{VERSION}-natives-%{PLATFORM}.jar</url>
+				</resolver>
+        <resolver type="archive" />
+			</source>
+			<install>
+				<extract-all targetfolder="lib/lwjgl" />
+			</install>
+			<uninstall>
+				<!-- windows -->
+				<delete-folder targetfolder="lib/lwjgl" />
+			</uninstall>
+      <startup-librarypath priority="40" path="lib/lwjgl" />
+		</package>
+    <package id="lwjgl_util">
+      <name>LWJGL Util</name>
+      <version>2.8.5</version>
+      <dependencies>
+        <package id="lwjgl" />
+      </dependencies>
+      <source>
+        <!--
+				<resolver type="maven-download">
+					<groupId>org.lwjgl.lwjgl</groupId>
+					<artifactId>lwjgl_util</artifactId>
+					<version>%{VERSION}</version>
+				</resolver>
+				-->
+        <resolver type="download">
+          <url>http://repo1.maven.org/maven2/org/lwjgl/lwjgl/%{ID}/%{VERSION}/%{ID}-%{VERSION}.jar</url>
+        </resolver>
+        <resolver type="archive" />
+      </source>
+      <install>
+        <inject targetpath="bin/%{ID}.jar" />
+      </install>
+      <uninstall>
+        <delete targetpath="bin/%{ID}.jar" />
+      </uninstall>
+      <startup-classpath path="bin/%{ID}.jar" priority="40" />
+    </package>
+		<package id="jinput">
+			<name>jInput</name>
+			<version>2.0.5</version>
+			<dependencies>
+				<package id="jinput-platform" />
+			</dependencies>
+			<source>
+				<resolver type="download">
+					<url>http://repo1.maven.org/maven2/net/java/jinput/%{ID}/%{VERSION}/%{ID}-%{VERSION}.jar</url>
+				</resolver>
+				<resolver type="archive" />
+			</source>
+      <install>
+        <inject targetpath="bin/%{ID}.jar" />
+      </install>
+      <uninstall>
+        <delete targetpath="bin/%{ID}.jar" />
+      </uninstall>
+      <startup-classpath path="bin/%{ID}.jar" priority="40" />
+		</package>
+		<package id="jinput-platform">
+			<name>jInput Native Binaries</name>
+			<version>2.0.5</version>
+			<source>
+				<resolver type="download">
+					<url>http://repo1.maven.org/maven2/net/java/jinput/%{ID}/%{VERSION}/%{ID}-%{VERSION}-natives-%{PLATFORM}.jar</url>
+				</resolver>
+				<resolver type="archive" />
+			</source>
+			<install>
+				<extract-all targetfolder="lib/jinput" />
+			</install>
+			<uninstall>
+				<delete-folder targetfolder="lib/jinput" />
+			</uninstall>
+      <startup-librarypath priority="40" path="lib/jinput" />
+		</package>
+    
+    <!-- Internal modifications (added to classpath) -->
+    <package id="minecraft-forge">
+      <name>Minecraft Forge</name>
+      <version>1.4.7-6.6.2.534</version>
+      <description>Enhances the Minecraft client with a modding framework and a mod loader.</description>
+      <dependencies>
+        <package id="minecraft-client" />
+        <!--<package id="optifine" required="false" />-->
+      </dependencies>
+      <source>
+        <resolver type="download">
+          <url>http://files.minecraftforge.net/minecraftforge/minecraftforge-universal-%{VERSION}.zip</url>
+        </resolver>
+        <resolver type="archive" />
+      </source>
+      <install>
+        <!-- Java doesn't like overwriting classes which are signed differently. :( -->
+        <uninject targetpath="bin/minecraft.jar" filter="META-INF/MOJANG_C.*" />
+        <inject targetpath="bin/%{ID}.jar" />
+      </install>
+      <uninstall>
+        <delete targetpath="bin/%{ID}.jar" />
+      </uninstall>
+      <startup-classpath path="bin/%{ID}.jar" priority="55" />
+    </package>
+		<package id="optifine">
+			<name>OptiFine</name>
+			<version>1.4.6_HD_U_D5</version>
+      <info-url>http://optifine.net/</info-url>
+			<description>Adds technical graphic improvements to increase the frame rate and adds more options to the video settings.</description>
+			<dependencies>
+				<package id="minecraft-client" />
+			</dependencies>
+      <!--
+			<options>
+				<selector id="optifine_variant" title="OptiFine variant">
+					<choice value="HD_U" default="true">Ultra</choice>
+					<choice value="HD">Standard</choice>
+					<choice value="L">Light</choice>
+				</selector>
+			</options>
+      -->
+			<source>
+				<resolver type="download">
+					<url>http://optifine.net/adloadx.php?f=OptiFine_%{VERSION}.zip</url>
+					<type>string</type>
+				</resolver>
+				<resolver type="regex">
+					<regex>zip&amp;x=([A-z0-9]+)</regex>
+					<match>0</match>
+				</resolver>
+				<resolver type="download">
+					<url>http://optifine.net/downloadx.php?f=OptiFine_%{VERSION}.zip&amp;x=%{PIPE}</url>
+				</resolver>
+				<resolver type="archive" />
+			</source>
+      <install>
+        <inject targetpath="bin/%{ID}.jar" />
+      </install>
+      <uninstall>
+        <delete targetpath="bin/%{ID}.jar" />
+      </uninstall>
+      <startup-classpath path="bin/%{ID}.jar" priority="60" />
+		</package>
+    <package id="shaders">
+      <name>ShadersMod</name>
+      <info-url>http://www.minecraftforum.net/topic/1544257-142-glsl-shaders-mod-modified-by-karyonix/</info-url>
+      <version>1.4.3-MC_1.4.6-OF_HD_U_D5</version>
+      <description>Installs the shaders mod and with it the ability to add additional graphical effects with so called shader packs.</description>
+      <dependencies>
+        <package id="minecraft-client" />
+        <package id="optifine" />
+      </dependencies>
+      <source>
+        <resolver type="mediafire">
+          <id>14px1t5owve84a4</id>
+        </resolver>
+        <resolver type="archive" />
+      </source>
+      <install>
+        <inject targetpath="bin/%{ID}.jar" />
+      </install>
+      <uninstall>
+        <delete targetpath="bin/%{ID}.jar" />
+      </uninstall>
+      <startup-classpath path="bin/%{ID}.jar" priority="70" />
+    </package>
+    
+    <!-- External modifications -->
+    <package id="buildcraft" class="external-mod">
+      <name>BuildCraft</name>
+      <version>3.4.3</version>
+      <description>Extending Minecraft with pipes, auto-crafting, quarries, engines and much more!</description>
+      <info-url>http://www.mod-buildcraft.com/</info-url>
+      <source>
+        <resolver type="mediafire">
+          <id>923n56cdhv33jye</id>
+        </resolver>
+        <resolver type="archive" />
+      </source>
+    </package>
+    <package id="ccinput" class="external-mod">
+      <name>CCInput</name>
+      <version>2:1.21</version>
+      <description>Allows you to remote control turtles, play games on monitors, program on monitors and much more.</description>
+      <info-url>http://www.computercraft.info/forums2/index.php?/topic/4742-121mc-146-ccinput2-remote-control/</info-url>
+      <dependencies>
+        <package id="computercraft" />
+        <package id="hackingroelz-core" />
+      </dependencies>
+      <source>
+        <resolver type="mediafire">
+          <id>9e2pznf8jjt5ujl</id>
+        </resolver>
+        <resolver type="archive" />
+      </source>
+    </package>
+    <package id="computercraft" class="external-mod">
+      <name>ComputerCraft</name>
+      <version>1.5</version>
+      <description>Adds computers, turtle machines, wireless networking and digital data storage to Minecraft.</description>
+      <source>
+        <resolver type="mediafire">
+          <id>bsqfq6dafnu1p56</id>
+        </resolver>
+        <resolver type="archive" />
+      </source>
+    </package>
+    <package id="equivalent_exchange" class="external-mod">
+      <name>Equivalent Exchange</name>
+      <version>3:pre1f</version>
+      <source>
+        <resolver type="download">
+          <url>https://dl.dropbox.com/u/25591134/EE3/MC%201.4.7/pre1f/ee3-universal-pre1f.jar</url>
+        </resolver>
+        <resolver type="archive" />
+      </source>
+    </package>
+    <package id="hackingroelz-core" class="external-mod">
+      <name>Hackingroelz Core</name>
+      <version>10</version>
+      <description>Library for several mods using ComputerCraft made by Hackingroelz.</description>
+      <source>
+        <resolver type="mediafire">
+          <id>lv8vv517av6b57x</id>
+        </resolver>
+        <resolver type="archive" />
+      </source>
+    </package>
+    <package id="industrialcraft" class="external-mod">
+      <name>IndustrialCraft</name>
+      <version>2:1.115.761</version>
+      <description>Adds tons of new items and blocks for industrial usage.</description>
+      <source>
+        <resolver type="download">
+          <url>http://ic2api.player.to:8080/job/IC2/761/artifact/packages/industrialcraft-2_1.115.761.jar</url>
+        </resolver>
+        <resolver type="archive" />
+      </source>
+    </package>
+    <package id="industrialcraft-nuclearcontrol" class="external-mod">
+      <name>Nuclear Control Addon for IndustrialCraft</name>
+      <version>1.4.6</version>
+      <description>Adds items and blocks related to nuclear industrialization.</description>
+      <info-url>http://forum.industrial-craft.net/index.php?page=Thread&amp;threadID=5915</info-url>
+      <dependencies>
+        <package id="industrialcraft" />
+      </dependencies>
+      <source>
+        <resolver type="download">
+          <url>http://forum.industrial-craft.net/index.php?page=Attachment&amp;attachmentID=2620</url>
+        </resolver>
+        <resolver type="archive" />
+      </source>
+    </package>
+    <package id="openccsensors" class="external-mod">
+      <name>OpenCCSensors</name>
+      <version>0.1.4</version>
+      <description>Adds sensors for environment analysis to ComputerCraft.</description>
+      <info-url>http://www.computercraft.info/forums2/index.php?/topic/5996-147-cc-15-openccsensors/</info-url>
+      <dependencies>
+        <package id="computercraft" />
+      </dependencies>
+      <source>
+        <resolver type="download">
+          <url>https://dl.dropbox.com/u/4295615/OpenCCSensors-0.1.4.zip</url>
+        </resolver>
+        <resolver type="archive" />
+      </source>
+    </package>
+    <package id="portalgun" class="external-mod">
+      <name>PortalGun</name>
+      <info-url>http://www.minecraftforum.net/topic/199391-147smpforge-portal-gun-reconstructed-v4-rewritten-again/</info-url>
+      <version>1.4.7-4</version>
+      <source>
+        <resolver type="mediafire">
+          <id>v7ouuz9gnzxuxxc</id>
+        </resolver>
+        <resolver type="archive" />
+      </source>
+    </package>
+    <package id="reiminimap" class="external-mod">
+      <name>Rei's Minimap</name>
+      <info-url>http://www.minecraftforum.net/topic/482147-147-jan10-reis-minimap-v32-06/</info-url>
+      <version>1.4.7-3.2_06</version>
+      <description>Adds a minimap and the possibilities to add waypoints to Minecraft to help you to orientate yourself on the world.</description>
+      <source>
+        <resolver type="download">
+          <url>https://dl.dropbox.com/u/34787499/minecraft/1.4.7/%5B1.4.7%5DReiMinimap_v3.2_06.zip</url>
+        </resolver>
+        <resolver type="archive" />
+      </source>
+    </package>
+    <package id="redpower-core" class="external-mod">
+      <name>RedPower Core</name>
+      <version>2.0pr6</version>
+      <source>
+        <resolver type="download">
+          <url>http://www.eloraam.com/files/43143756a7636620da44/RedPowerCore-2.0pr6.zip</url>
+        </resolver>
+        <resolver type="archive" />
+      </source>
+    </package>
+    <package id="redpower-digital" class="external-mod">
+      <name>RedPower Digital</name>
+      <version>2.0pr6</version>
+      <source>
+        <resolver type="download">
+          <url>http://www.eloraam.com/files/db77437ae86ac3b0ccf7/RedPowerDigital-2.0pr6.zip</url>
+        </resolver>
+        <resolver type="archive" />
+      </source>
+    </package>
+    <package id="redpower-mechanical" class="external-mod">
+      <name>RedPower Mechanical</name>
+      <version>2.0pr6</version>
+      <source>
+        <resolver type="download">
+          <url>http://www.eloraam.com/files/f33ffab221579545ec5a/RedPowerMechanical-2.0pr6.zip</url>
+        </resolver>
+        <resolver type="archive" />
+      </source>
+    </package>
+    <package id="redpower-compat" class="external-mod">
+      <name>RedPower Compatibility</name>
+      <version>2.0pr6</version>
+      <source>
+        <resolver type="download">
+          <url>http://www.eloraam.com/files/9445db5ef4a2014a12b2/RedPowerCompat-2.0pr6.zip</url>
+        </resolver>
+        <resolver type="archive" />
+      </source>
+    </package>
+    <package id="sabermod" class="external-mod">
+      <name>SaberMod</name>
+      <info-url>http://www.minecraftforum.net/topic/1023782-147-multiplayer-sabermod-v0172-34k-downloads/</info-url>
+      <version>1.4.7-0.17.2</version>
+      <source>
+        <resolver type="download">
+          <url>http://www.toomuchminecraft.co.uk/sabermod/current/sabermod.zip</url>
+        </resolver>
+        <resolver type="archive" />
+      </source>
+    </package>
+    
+    <!-- Shader packs -->
+    <package id="seus">
+      <name>Sonic Ether's Unbelievable Shaders</name>
+      <version>10.0-RC7</version>
+      <description>Adds the SEUS shaders to the shader pack directory.</description>
+      <dependencies>
+        <package id="minecraft-client" />
+        <package id="shaders" />
+      </dependencies>
+      <source>
+        <resolver type="mediafire">
+          <id>3gghg3rck1cvh6g</id>
+        </resolver>
+        <resolver type="archive" />
+      </source>
+      <install>
+        <inject targetpath=".minecraft/shaderpacks/SEUS.zip" />
+      </install>
+      <uninstall>
+        <delete targetpath=".minecraft/shaderpacks/SEUS.zip" />
+      </uninstall>
+    </package>
+    
+	</repository>
+  <templates>
+    <package class="external-mod">
+      <dependencies>
+        <package id="minecraft-client" />
+        <package id="minecraft-forge" />
+      </dependencies>
+      <install>
+        <inject targetpath=".minecraft/mods/%{ID}.jar" />
+      </install>
+      <uninstall>
+        <delete targetpath=".minecraft/mods/%{ID}.jar" />
+      </uninstall>
+    </package>
+  </templates>
+	<setup>
+    <package id="minecraft-client" />
+    <package id="minecraft-forge" />
+    <package id="optifine" required="false" />
+    <package id="shaders" required="false" />
+    <package id="seus" required="false" />
+    <package id="buildcraft" />
+    <package id="ccinput" />
+    <package id="computercraft" />
+    <package id="equivalent_exchange" />
+    <package id="industrialcraft" />
+    <package id="industrialcraft-nuclearcontrol" />
+    <package id="openccsensors" />
+    <package id="portalgun" />
+    <package id="reiminimap" required="false" />
+    <package id="redpower-core" />
+    <package id="redpower-digital" />
+    <package id="redpower-mechanical" />
+    <package id="redpower-compat" />
+    <package id="sabermod" />
+	</setup>
+</data>

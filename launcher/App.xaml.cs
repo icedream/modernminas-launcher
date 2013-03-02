@@ -86,5 +86,11 @@ namespace ModernMinas.Launcher
                 return System.IO.Path.Combine(GamePath, "lib");
             }
         }
+
+        public static string StartupLibrarypath
+        { get; internal set; }
+
+        public static string StartupClasspath
+        { get; internal set; }
     }
 }

@@ -20,11 +20,10 @@ using System.Windows.Shapes;
 using System.Security;
 using System.Threading;
 using System.Threading.Tasks;
+using ModernMinas.Update.Api;
 
 namespace ModernMinas.Launcher
 {
-    using API;
-
     /// <summary>
     /// Interaktionslogik für MainWindow.xaml
     /// </summary>
@@ -148,13 +147,13 @@ namespace ModernMinas.Launcher
             }));
         }
 
-        public void SetProgress(int val = -1, int max = int.MinValue, int min = int.MinValue)
+        public void SetProgress(double val = -1, double max = double.MinValue, double min = double.MinValue)
         {
             this.ProgressBar.Dispatcher.Invoke(new Action(delegate()
             {
                 this.ProgressBar.Visibility = System.Windows.Visibility.Visible;
-                if (min > int.MinValue) this.ProgressBar.Minimum = min;
-                if (max > int.MinValue) this.ProgressBar.Maximum = max;
+                if (min > double.MinValue) this.ProgressBar.Minimum = min;
+                if (max > double.MinValue) this.ProgressBar.Maximum = max;
                 if (val >= 0)
                 {
                     this.ProgressBar.Value = val;
@@ -209,7 +208,6 @@ namespace ModernMinas.Launcher
             });
         }
         
-        [STAThread]
         private void Login_SepThread()
         {
             try
@@ -271,9 +269,9 @@ namespace ModernMinas.Launcher
                 "-Xmx" + config.MaximalRam.ToMegabytes() + "M",
                 "-Xincgc",
                 Environment.Is64BitProcess ? "-d64" : "-d32",
-                "-Djava.library.path=lib",
+                "-Djava.library.path=" + App.StartupLibrarypath,
                 "-Djava.io.tmpdir=" + System.IO.Path.Combine(App.GamePath, "tmp"),
-                "-cp", string.Join(";", from file in (new System.IO.DirectoryInfo(Launcher.App.GameBinPath).GetFiles()) where file.Extension.EndsWith("jar", StringComparison.OrdinalIgnoreCase) select System.IO.Path.Combine("bin", file.Name)),
+                "-cp", App.StartupClasspath,
                 "net.minecraft.client.Minecraft",
                 config.Username,
                 l.SessionId,
@@ -493,71 +491,79 @@ namespace ModernMinas.Launcher
 
         public void UpdateMinecraft()
         {
-            // Connect to update server
             SetProgress();
-            SetStatus("Connecting to update server...");
-            TcpClient tcp = new TcpClient("update.modernminas.de", 25555);
-            var ns = tcp.GetStream();
-            var updater = new Connection(ns);
-            updater.SendProtocolVersion(); // Check if protocol version fits
+            SetStatus("Fetching packages...");
 
-            SetStatus("Checking for updates...");
-            var repository = updater.RequestFileList();
-            List<FileInfo> filesToUpdate = new List<FileInfo>();
-            List<System.IO.FileInfo> filesToDelete = new List<System.IO.FileInfo>();
-            var baseDir = new System.IO.DirectoryInfo(App.GamePath);
-            baseDir.Create();
-            CheckUpdateDir(repository, baseDir, ref filesToUpdate, ref filesToDelete);
+            var uri = new Uri("http://repo.update.modernminas.de/");
 
-            SetStatus("Downloading...");
-            var totalUpdateSize = filesToUpdate.Select(u => u.Length).Sum();
-            SetProgress(0, (int)(totalUpdateSize / 1024));
-            long ou = 0; // finished updates size
-            foreach (var f in filesToUpdate)
+            CacheFile cache = new CacheFile(System.IO.Path.Combine(App.GamePath, "installation.cache"));
+            Repository repository = new Repository(uri, cache) { TargetDirectory = new System.IO.DirectoryInfo(App.GamePath) };
+            Setup setup = new Setup(uri, repository);
+
+            Dictionary<string, float> progress = new Dictionary<string,float>();
+            foreach (var package in setup.Packages)
             {
-                SetProgress((int)(ou / 1024));
-                System.IO.FileInfo fi = new System.IO.FileInfo(System.IO.Path.Combine(f.Directory.GetAbsolutePath(baseDir.FullName), f.Name));
-                Debug.WriteLine("Download: {0}", fi.FullName, null);
-                fi.Directory.Create();
-                var fis = fi.Create();
-                var status = updater.RequestFileAsync(f, fis);
-                while (status.Status != RequestFileStatus.Finished)
-                {
-                    System.Threading.Thread.Sleep(100);
-                    switch (status.Status)
-                    {
-                        case RequestFileStatus.DownloadingFile:
-                            switch (status.DownloadStatus.Status)
-                            {
-                                case ReadFileStatus.Downloading:
-                                    SetProgress((int)((ou + status.DownloadStatus.BytesRead) / 1024));
-                                    SetStatus("Downloading: " + GetSizeString(ou + status.DownloadStatus.BytesRead) + "/" + GetSizeString(totalUpdateSize));
-                                    break;
-                                default:
-                                    if (status.DownloadStatus != null)
-                                        SetStatus("Downloading: " + GetSizeString(ou + status.DownloadStatus.BytesRead) + "/" + GetSizeString(totalUpdateSize));
-                                    break;
-                            }
-                            break;
-                        default:
-                            if (status.DownloadStatus != null)
-                                SetStatus("Downloading: " + GetSizeString(ou + status.DownloadStatus.BytesRead) + "/" + GetSizeString(totalUpdateSize));
-                            break;
-                    }
-                }
-                fis.Flush();
-                fis.Close();
-                fis.Dispose();
-                ou += f.Length;
+                progress.Add(package.ID + "_preinstall", 0);
+                progress.Add(package.ID + "_download", 0);
+                progress.Add(package.ID + "_install", 0);
+                progress.Add(package.ID + "_uninstall", 0);
             }
-            updater.Disconnect();
 
-            SetStatus("Deleting files...");
-            foreach (var f in filesToDelete)
-                f.Delete();
+            repository.StatusChanged += (sender, e) =>
+            {
+                switch (e.Status)
+                {
+                    case StatusType.Parsing:
+                    case StatusType.Installing:
+                        if (!progress.ContainsKey(e.Package.ID + "_install"))
+                            break;
+                        progress[e.Package.ID + "_install"] = e.Progress;
+                        if(progress[e.Package.ID + "_uninstall"] < 1)
+                            progress[e.Package.ID + "_uninstall"] = 1;
+                        break;
+                    case StatusType.Downloading:
+                        if (progress.ContainsKey(e.Package.ID + "_download"))
+                            progress[e.Package.ID + "_download"] = e.Progress;
+                        break;
+                    case StatusType.CheckingDependencies:
+                    case StatusType.InstallingDependencies:
+                        if (progress.ContainsKey(e.Package.ID + "_preinstall"))
+                            progress[e.Package.ID + "_preinstall"] = e.Progress;
+                        break;
+                    case StatusType.Uninstalling:
+                        if (progress.ContainsKey(e.Package.ID + "_uninstall"))
+                            progress[e.Package.ID + "_uninstall"] = e.Progress;
+                        break;
+                }
+                SetProgress(progress.Sum(v => v.Value));
+            };
+            SetProgress(0, setup.Packages.Count() * 4);
+            SetStatus("Updating...");
+            foreach (var package in setup.Packages)
+            {
+                Debug.WriteLine("Current package: {0}", package.ID, null);
+
+                SetProgress(progress.Sum(v => v.Value));
+
+                if (package.IsInstalled)
+                {
+                    package.Update();
+                }
+                else
+                {
+                    package.Install();
+                }
+            }
+            foreach (var package in from p in setup.Packages where !cache.GetAllCachedPackageIDs().Contains(p.ID) select p)
+            {
+                repository.UninstallPackage(package.ID);
+            }
 
             SetStatus("Update finished");
             SetProgress(1, 1);
+
+            App.StartupClasspath = setup.GetStartupClasspath();
+            App.StartupLibrarypath = setup.GetStartupLibrarypath();
         }
 
         string GetSizeString(double size)
@@ -572,37 +578,6 @@ namespace ModernMinas.Launcher
                 size /= 1024;
             }
             return string.Format("{0:N1} {1}", size, suffixes[Math.Min(suffixes.Length, i)]);
-        }
-
-        void CheckUpdateDir(DirectoryInfo remote, System.IO.DirectoryInfo local, ref List<FileInfo> filesToUpdate, ref List<System.IO.FileInfo> filesToDelete)
-        {
-            foreach (var f in remote.Files)
-                if(!f.Name.StartsWith(".mm-sys"))
-                    CheckUpdateFile(f, new System.IO.FileInfo(f.GetAbsolutePath(App.GamePath)), ref filesToUpdate);
-            if(remote.Files.Select(f => f.Name).Contains(".mm-sys.delete"))
-                foreach (var f in
-                        from file in local.GetFiles()
-                        where !remote.Files.Select(remoteFile => remoteFile.Name.ToLower()).Contains(file.Name.ToLower())
-                        select file
-                    )
-                {
-                    Debug.WriteLine("Needs deletion: {0}", local.FullName, null);
-                    filesToDelete.Add(f);
-                }
-            foreach (var d in remote.Directories)
-                CheckUpdateDir(d, local.CreateSubdirectory(d.Name), ref filesToUpdate, ref filesToDelete);
-        }
-
-        void CheckUpdateFile(FileInfo remote, System.IO.FileInfo local, ref List<FileInfo> filesToUpdate)
-        {
-            if (!local.Exists || !local.Length.Equals(remote.Length) || local.LastWriteTimeUtc < remote.LastWriteTimeUtc)
-            {
-                Debug.WriteLine(null);
-                //Debug.WriteLine("Local file: {0}, {1} bytes, {2}", local.Name, local.Length, local.LastWriteTimeUtc);
-                Debug.WriteLine("Remote file: {0}, {1} bytes, {2}", remote.Name, remote.Length, remote.LastWriteTimeUtc);
-                filesToUpdate.Add(remote);
-                Debug.WriteLine("=> Needs update");
-            }
         }
 
         public void Fade(FrameworkElement c, double targetOpacity, EasingFunctionBase f = null, double ms = 500.0, EventHandler onFinish = null)

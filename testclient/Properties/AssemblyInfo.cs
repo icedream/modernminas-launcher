@@ -5,12 +5,12 @@ using System.Runtime.InteropServices;
 // Allgemeine Informationen über eine Assembly werden über die folgenden 
 // Attribute gesteuert. Ändern Sie diese Attributwerte, um die Informationen zu ändern,
 // die mit einer Assembly verknüpft sind.
-[assembly: AssemblyTitle("TestUpdateClient")]
+[assembly: AssemblyTitle("Modern Minas Command-Line Launcher")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("TestUpdateClient")]
-[assembly: AssemblyCopyright("Copyright ©  2012")]
+[assembly: AssemblyCompany("Modern Minas")]
+[assembly: AssemblyProduct("Modern Minas")]
+[assembly: AssemblyCopyright("© 2013 Icedream")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -20,7 +20,7 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 
 // Die folgende GUID bestimmt die ID der Typbibliothek, wenn dieses Projekt für COM verfügbar gemacht wird
-[assembly: Guid("a51608e9-90c7-426f-aac6-62eccd20c166")]
+[assembly: Guid("013c1fb7-58a3-4886-bd50-6c51808d1ff1")]
 
 // Versionsinformationen für eine Assembly bestehen aus den folgenden vier Werten:
 //

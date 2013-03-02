@@ -1,0 +1,67 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace ModernMinas.Update.Api.Resolvers
+{
+    [ResolverName("var")]
+    public class VariableResolver : ResolverBase
+    {
+        #region Static
+
+        private static Dictionary<string, object> _vars = new Dictionary<string, object>();
+
+        public static void Clear()
+        {
+            _vars.Clear();
+            //Console.WriteLine("VariableResolver: Cleared.");
+        }
+
+        public static void Set(string name, object value)
+        {
+            //Console.WriteLine("VariableResolver: {0} = {1}", name, value);
+            _vars[name] = value;
+        }
+
+        public static object Get(string name)
+        {
+            return _vars.ContainsKey(name) ? _vars[name] : null;
+        }
+
+        public static void Unset(string name)
+        {
+            if (_vars.ContainsKey(name))
+                _vars.Remove(name);
+            //Console.WriteLine("VariableResolver: {0} unset.", name);
+        }
+
+        public static string ExpandInternal(string input)
+        {
+            //Console.WriteLine("VariableResolver: Expanding input: {0}", input);
+            foreach(string n in _vars.Keys)
+            {
+                string var = string.Format("${1}{0}{2}", n, "{", "}");
+                //Console.WriteLine("VariableResolver: Expanding {0}", var);
+                input = input.Replace(var, _vars[n] != null ? _vars[n].ToString() : null);
+            }
+            return input;
+        }
+
+        #endregion
+
+        public override string ResolveToString()
+        {
+            if (resolverNode.SelectSingleNode("child::name") == null)
+                throw new InvalidOperationException();
+
+            string name = resolverNode.SelectSingleNode("child::name").InnerText;
+            string value = Expand(Input.ToString());
+
+            Set(name, value);
+
+            return value;
+        }
+    }
+}
