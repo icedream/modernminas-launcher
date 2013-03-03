@@ -19,7 +19,7 @@ namespace ModernMinas.Launcher
     /// </summary>
     public partial class UpdateWindow : Window
     {
-        WebClient wc = new WebClient();
+        static WebClient wc = new WebClient();
 
         public UpdateWindow()
         {
@@ -41,7 +41,7 @@ namespace ModernMinas.Launcher
 
         }
 
-        public string CheckLauncherUpdates()
+        public static string CheckLauncherUpdates()
         {
             string url = "http://update.modernminas.de/bootstrap/version";
             string newVersion = wc.DownloadString(url);
@@ -65,7 +65,7 @@ namespace ModernMinas.Launcher
                 {
                     DownloadLauncherUpdates();
                     StartLauncherUpdates();
-                    Environment.Exit(0);
+                    this.Dispatcher.Invoke(new Action(this.Close));
                 });
         }
     }

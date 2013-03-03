@@ -48,7 +48,12 @@ namespace ModernMinas.Launcher
             }
 
             if (System.IO.File.Exists("version.txt"))
-                new UpdateWindow().ShowDialog();
+                if (UpdateWindow.CheckLauncherUpdates() != string.Empty)
+                {
+                    new UpdateWindow().ShowDialog();
+                    Environment.Exit(0);
+                }
+
         }
 
         public static string AppData
