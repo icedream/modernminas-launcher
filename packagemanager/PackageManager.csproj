@@ -45,7 +45,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\ModernMinas.Update.Api\UpdateApi.csproj">
+    <ProjectReference Include="..\api\UpdateApi.csproj">
       <Project>{533897f2-0f54-48b7-88e6-626d4fa4cdbb}</Project>
       <Name>UpdateApi</Name>
     </ProjectReference>

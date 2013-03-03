@@ -24,7 +24,7 @@ namespace ModernMinas.Update.Api
                 firstTimeUsage = true;
                 SQLiteConnection.CreateFile(file);
             }
-
+            
             _sqlite.ConnectionString = string.Format("Data Source={0}", file);
             _sqlite.Open();
 
