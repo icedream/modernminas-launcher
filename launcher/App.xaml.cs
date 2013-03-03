@@ -46,6 +46,9 @@ namespace ModernMinas.Launcher
                 MessageBox.Show(error.ToString(), "Loading", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
+
+            if (System.IO.File.Exists("version.txt"))
+                new UpdateWindow().ShowDialog();
         }
 
         public static string AppData

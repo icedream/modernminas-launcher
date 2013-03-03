@@ -1,0 +1,9 @@
+﻿<Window x:Class="ModernMinas.Launcher.UpdateWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Updating launcher" Height="84.587" Width="455.639" Name="UpdateWindow1" Icon="Images/MMsymbol.ICO" Loaded="UpdateWindow1_Loaded">
+    <StackPanel Orientation="Vertical" Margin="5">
+        <Label Name="Status">Downloading launcher updates...</Label>
+        <ProgressBar Name="Progress" Value="3" Height="14" Visibility="Hidden" />
+    </StackPanel>
+</Window>
