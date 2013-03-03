@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Net.Cache;
+using System.Net.Sockets;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -16,35 +18,96 @@ namespace ModernMinas.Update.Api.Resolvers
         public override Stream ResolveToStream()
         {
             var wc = new WebClient();
-            var url = string.Format("http://mediafire.com/?{0}", Expand(resolverNode.SelectSingleNode("child::id").InnerText));
+            var url = new Uri(string.Format("http://mediafire.com/?{0}", Expand(resolverNode.SelectSingleNode("child::id").InnerText)));
 
             MemoryStream ms = new MemoryStream();
 
-            var s = wc.OpenRead(url);
-            int length = UTF8Encoding.UTF8.GetMaxByteCount(16);
+        retry1:
+            System.Diagnostics.Debug.WriteLine("MF URL: {0}", url.ToString());
+            Dictionary<string, string> headers = new Dictionary<string, string>();
+
+            // Mediafire has buggy HTTP servers which tend to violate the protocol, crashing the whole download with a ProtocolViolationException.
+            // We are going to do a manual request with manual parsing here. ._.
+            var socket1 = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+            socket1.Connect(new DnsEndPoint(url.Host, 80));
+            Stream s = new BufferedStream(new NetworkStream(socket1));
+            using (var ncs = new NonClosingStream(s))
+            using (var sr = new StreamReader(ncs))
+            using (var sw = new StreamWriter(ncs))
+            {
+                sw.WriteLine("GET {0} HTTP/1.0", url.PathAndQuery);
+                sw.WriteLine("Host: {0}", url.Host);
+                sw.WriteLine("User-Agent: ModernMinasLauncher/3.0 (U; compatible)");
+                sw.WriteLine("Connection: close");
+                sw.WriteLine();
+                sw.Flush();
+                var status = sr.ReadLine().Trim();
+                if (!new[] { "200", "301", "302", "303" }.Contains(status.Split(' ')[1]))
+                    throw new WebException("HTTP error: " + status);
+                string line = "";
+                while ((line = sr.ReadLine().Trim()).Any())
+                {
+                    var l = line.Split(':');
+                    headers.Add(l[0].ToLower(), string.Join(":", l.Skip(1)));
+                }
+            }
+            if (headers.ContainsKey("location"))
+            {
+                url = new Uri(url, headers["location"]);
+                goto retry1;
+            }
+            long length = UTF8Encoding.UTF8.GetMaxByteCount(16);
             byte[] buffer = new byte[length];
-            s.Read(buffer, 0, length);
+            s.Read(buffer, 0, (int)length);
 
             if (Encoding.UTF8.GetString(buffer).Contains("<!DOCTYPE html>") || Encoding.UTF8.GetString(buffer).Contains("<html>"))
             {
-                Console.WriteLine("MediafireResolver: Resolving page...");
-                string m;
+                System.Diagnostics.Debug.WriteLine("MediafireResolver: Resolving page...");
+                Uri m;
                 using (StreamReader sr = new StreamReader(s))
                 {
                     var c = sr.ReadToEnd();
-                    m = Regex.Match(c, "kNO = \"(.+)\"").Groups[1].Value;
+                    m = new Uri(Regex.Match(c, "kNO = \"(.+)\"").Groups[1].Value);
                 }
                 s.Close();
                 s.Dispose();
-                s = wc.OpenRead(m);
+
+                url = m;
+                goto retry1;
             }
             else
             {
                 Console.WriteLine("MediafireResolver: No need for extensive resolving.");
-                ms.Write(buffer, 0, length);
+                ms.Write(buffer, 0, (int)length);
             }
-            Console.WriteLine("MediafireResolver: Downloading file of type {0}", wc.ResponseHeaders[HttpResponseHeader.ContentType]);
-            s.CopyTo(ms);
+
+            length = long.Parse(headers["content-length"]);
+
+            buffer = new byte[1024];
+            Task.Factory.StartNew(() =>
+            {
+                while (ms.Position < length)
+                {
+                    var l = s.Read(buffer, 0, buffer.Length);
+                    ms.Write(buffer, 0, l);
+                }
+            });
+            Task.Factory.StartNew(() =>
+            {
+                while (ms.Position < length)
+                {
+                    OnStatusChanged(ms.Position / length, StatusType.Downloading);
+                    System.Threading.Thread.Sleep(50);
+                }
+            });
+            while (ms.Position < length)
+            {
+                System.Threading.Thread.Sleep(50);
+            }
+
+            OnStatusChanged(1, StatusType.Downloading);
+            ms.Flush();
+            ms.Seek(0, SeekOrigin.Begin);
             s.Close();
             s.Dispose();
 

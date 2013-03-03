@@ -84,13 +84,15 @@ namespace ModernMinas.Update.Api.Resolvers
                     {
                         while (targetStream.Position < length)
                         {
-                            OnStatusChanged(input.Position / input.Length, StatusType.Downloading);
+                            OnStatusChanged(targetStream.Position / length, StatusType.Downloading);
                             System.Threading.Thread.Sleep(50);
                         }
                     });
 
                     while (targetStream.Position < length)
-                        System.Threading.Thread.Sleep(10);
+                    {
+                        System.Threading.Thread.Sleep(50);
+                    }
 
                     targetStream.Flush();
                     targetStream.Seek(0, SeekOrigin.Begin);

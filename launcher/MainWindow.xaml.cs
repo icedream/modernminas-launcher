@@ -30,7 +30,7 @@ namespace ModernMinas.Launcher
     public partial class MainWindow : Window
     {
         const string UseSavedPasswordMagic = "\x00\xff\x00\xff\x00\xff\x00\xff";
-        const string ConfigFileName = "config.dat";
+        string ConfigFileName = "config.dat";
 
         MinecraftStatusWindow w = new MinecraftStatusWindow();
         MinecraftLogin l = new MinecraftLogin();
@@ -40,6 +40,9 @@ namespace ModernMinas.Launcher
         public MainWindow()
         {
             InitializeComponent();
+
+            System.IO.Directory.CreateDirectory(App.GamePath);
+            ConfigFileName = System.IO.Path.Combine(App.GamePath, ConfigFileName);
 
             if (System.IO.File.Exists(ConfigFileName))
                 try
@@ -77,6 +80,7 @@ namespace ModernMinas.Launcher
                 
             });
 
+#if LOGO_ANIMATION
             // Logo animation
             this.Dispatcher.Invoke(new Action(() =>
             {
@@ -111,6 +115,7 @@ namespace ModernMinas.Launcher
                 animation.To = this.Logo.Width;
                 storyboard.Begin();
             }));
+#endif
 
             this.Password.Password = config.Password != null && config.Password.Length > 0 ? UseSavedPasswordMagic : string.Empty;
             this.Username.Text = config.Username;
@@ -509,10 +514,23 @@ namespace ModernMinas.Launcher
                 progress.Add(package.ID + "_uninstall", 0);
             }
 
+            int i = 0;
             repository.StatusChanged += (sender, e) =>
             {
                 switch (e.Status)
                 {
+                    case StatusType.Finished:
+                        if (!progress.ContainsKey(e.Package.ID + "_install"))
+                            break;
+                        if (progress[e.Package.ID + "_uninstall"] < 1)
+                            progress[e.Package.ID + "_uninstall"] = 1;
+                        if (progress[e.Package.ID + "_preinstall"] < 1)
+                            progress[e.Package.ID + "_preinstall"] = 1;
+                        if (progress[e.Package.ID + "_download"] < 1)
+                            progress[e.Package.ID + "_download"] = 1;
+                        if(progress[e.Package.ID + "_install"] < 1)
+                            progress[e.Package.ID + "_install"] = 1;
+                        break;
                     case StatusType.Parsing:
                     case StatusType.Installing:
                         if (!progress.ContainsKey(e.Package.ID + "_install"))
@@ -520,10 +538,18 @@ namespace ModernMinas.Launcher
                         progress[e.Package.ID + "_install"] = e.Progress;
                         if(progress[e.Package.ID + "_uninstall"] < 1)
                             progress[e.Package.ID + "_uninstall"] = 1;
+                        if(progress[e.Package.ID + "_preinstall"] < 1)
+                            progress[e.Package.ID + "_preinstall"] = 1;
+                        if(progress[e.Package.ID + "_download"] < 1)
+                            progress[e.Package.ID + "_download"] = 1;
                         break;
                     case StatusType.Downloading:
                         if (progress.ContainsKey(e.Package.ID + "_download"))
+                        {
+                            if (progress[e.Package.ID + "_preinstall"] < 1)
+                                progress[e.Package.ID + "_preinstall"] = 1;
                             progress[e.Package.ID + "_download"] = e.Progress;
+                        }
                         break;
                     case StatusType.CheckingDependencies:
                     case StatusType.InstallingDependencies:
@@ -531,26 +557,34 @@ namespace ModernMinas.Launcher
                             progress[e.Package.ID + "_preinstall"] = e.Progress;
                         break;
                     case StatusType.Uninstalling:
+                        SetStatus(string.Format("Package {0}/{1}: Updating...", i, setup.Packages.Count()));
                         if (progress.ContainsKey(e.Package.ID + "_uninstall"))
                             progress[e.Package.ID + "_uninstall"] = e.Progress;
                         break;
                 }
                 SetProgress(progress.Sum(v => v.Value));
+                foreach (var j in progress.Keys)
+                {
+                    Debug.WriteLine("{0}: {1}", j, progress[j]);
+                }
             };
             SetProgress(0, setup.Packages.Count() * 4);
             SetStatus("Updating...");
             foreach (var package in setup.Packages)
             {
+                i++;
                 Debug.WriteLine("Current package: {0}", package.ID, null);
 
                 SetProgress(progress.Sum(v => v.Value));
 
                 if (package.IsInstalled)
                 {
+                    SetStatus(string.Format("Package {0}/{1}: Checking for updates...", i, setup.Packages.Count()));
                     package.Update();
                 }
                 else
                 {
+                    SetStatus(string.Format("Package {0}/{1}: Installing...", i, setup.Packages.Count()));
                     package.Install();
                 }
             }

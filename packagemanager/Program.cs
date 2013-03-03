@@ -6,7 +6,6 @@ using System.Reflection;
 using System.Diagnostics;
 
 using ModernMinas.Update.Api;
-using ModernMinas.Launcher;
 
 namespace PackageManager
 {
