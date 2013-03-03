@@ -387,7 +387,7 @@ namespace ModernMinas.Launcher
 
                 // Error handling
                 if (javaw.ExitCode != 0 /* No error at all */
-                    && javaw.ExitCode != -1 /* Closed via clicking "X" */)
+                    && javaw.ExitCode != -1 && javaw.ExitCode != 1 /* Closed via clicking "X" */)
                     this.Dispatcher.Invoke(new Action(() => SetError(string.Format("Minecraft error code {0}. {1}", javaw.ExitCode, lastError))));
                 this.Dispatcher.Invoke(new Action(() => { this.Close(); Environment.Exit(0); }));
             }, System.Threading.Tasks.TaskCreationOptions.AttachedToParent);
