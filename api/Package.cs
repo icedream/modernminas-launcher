@@ -308,17 +308,12 @@ namespace ModernMinas.Update.Api
                         throw err;
                     }
                 }
-                System.Diagnostics.Debug.WriteLine("// break 4 //");
-                resolver.StatusChanged -= eventHandler;
-                System.Diagnostics.Debug.WriteLine("// break 3 //");
-            }
 
-            System.Diagnostics.Debug.WriteLine("// break 2 //");
+                resolver.StatusChanged -= eventHandler;
+            }
 
             if (lastResult.GetType().IsSubclassOf(typeof(ArchiveBase)))
                 return _archive = lastResult as ArchiveBase;
-
-            System.Diagnostics.Debug.WriteLine("// break 1 //");
 
             throw new InvalidOperationException("Package did not resolve to an archive.");
         }
