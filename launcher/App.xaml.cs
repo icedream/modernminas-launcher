@@ -15,6 +15,9 @@ namespace ModernMinas.Launcher
     {
         public App()
         {
+            // Initialize log4net
+            Update.Api.Log.Init();
+
             // Java test
             try
             {

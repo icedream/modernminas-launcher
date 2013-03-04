@@ -7,11 +7,15 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Xml;
+using log4net;
 
 namespace ModernMinas.Update.Api.Resolvers
 {
     public class ResolverBase : IResolver
     {
+        private ILog _log;
+        protected ILog Log { get { if (_log == null) _log = LogManager.GetLogger(this.GetType()); return _log; } }
+
         private static string GetPlatformString()
         {
             switch (Environment.OSVersion.Platform)
@@ -33,21 +37,25 @@ namespace ModernMinas.Update.Api.Resolvers
 
         public virtual string ResolveToString()
         {
+            Log.Debug("Skipping string resolve.");
             throw new NotImplementedException();
         }
 
         public virtual ArchiveBase ResolveToArchive()
         {
+            Log.Debug("Skipping archive resolve.");
             throw new NotImplementedException();
         }
 
         public virtual MemoryMappedFile ResolveToMemoryMappedFile()
         {
+            Log.Debug("Skipping memory map file resolve.");
             throw new NotImplementedException();
         }
 
         public virtual Stream ResolveToStream()
         {
+            Log.Debug("Skipping stream resolve.");
             throw new NotImplementedException();
         }
 
@@ -88,6 +96,8 @@ namespace ModernMinas.Update.Api.Resolvers
 
         protected string Expand(string value)
         {
+            Log.DebugFormat("Expanding value input: {0}", value);
+
             value = VariableResolver.ExpandInternal(value);
 
             if(Input != null)
@@ -120,6 +130,7 @@ namespace ModernMinas.Update.Api.Resolvers
                 }
             }
 
+            Log.DebugFormat("Expanding value output: {0}", value);
             return value;
         }
 

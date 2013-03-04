@@ -32,20 +32,16 @@ namespace ModernMinas.Update.Api.Resolvers
             //var content = new WebClient().DownloadString(url);
             var content = Input.ToString();
 
-            //Console.WriteLine("Regex: {0}", regex);
-            //Console.WriteLine("Requested match: {0}", match);
-
-#if REGEX_DEBUG_INPUT
-            Console.WriteLine("=== Input starts here ===");
-            Console.WriteLine(content);
-            Console.WriteLine("=== Input ends here ===");
-#endif
+            Log.DebugFormat("Searching value input: {0}", content);
+            Log.DebugFormat("Regex: {0}", regex);
+            Log.DebugFormat("Requested match ID: {0}", match);
 
             var m = Regex.Matches(content, regex, RegexOptions.Compiled);
 
             if (matchIndex >= m.Count)
                 throw new ArgumentOutOfRangeException("Requested result #" + matchIndex + " but there are only " + m.Count + " matches.");
 
+            Log.DebugFormat("Result is: {0}", m[matchIndex].Value);
             return m[matchIndex].Value;
         }
     }

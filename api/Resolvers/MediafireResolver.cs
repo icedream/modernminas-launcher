@@ -24,7 +24,8 @@ namespace ModernMinas.Update.Api.Resolvers
             MemoryStream ms = new MemoryStream();
 
         retry1:
-            System.Diagnostics.Debug.WriteLine("MF URL: {0}", url.ToString());
+            Log.InfoFormat("Currently targeted URL is {0}", url.ToString());
+            Log.InfoFormat("Using {0} as referer", oldM);
             Dictionary<string, string> headers = new Dictionary<string, string>();
 
             // Mediafire has buggy HTTP servers which tend to violate the protocol, crashing the whole download with a ProtocolViolationException.
@@ -45,18 +46,23 @@ namespace ModernMinas.Update.Api.Resolvers
                 sw.WriteLine();
                 sw.Flush();
                 var status = sr.ReadLine().Trim();
+                Log.InfoFormat("Server returned status: {0}", status);
                 if (!new[] { "200", "301", "302", "303" }.Contains(status.Split(' ')[1]))
                     throw new WebException("HTTP error: " + status);
                 string line = "";
                 while ((line = sr.ReadLine().Trim()).Any())
                 {
                     var l = line.Split(':');
-                    headers.Add(l[0].ToLower(), string.Join(":", l.Skip(1)));
+                    string n = l[0].ToLower();
+                    string v = string.Join(":", l.Skip(1));
+                    Log.InfoFormat("Server returned header: {0} = {1}", n, v);
+                    headers.Add(n, v);
                 }
             }
             oldM = url;
             if (headers.ContainsKey("location"))
             {
+                Log.InfoFormat("Server redirected us to {0}", headers["location"]);
                 url = new Uri(url, headers["location"]);
                 goto retry1;
             }
@@ -66,12 +72,13 @@ namespace ModernMinas.Update.Api.Resolvers
 
             if (Encoding.UTF8.GetString(buffer).Contains("<!DOCTYPE html>") || Encoding.UTF8.GetString(buffer).Contains("<html>"))
             {
-                System.Diagnostics.Debug.WriteLine("MediafireResolver: Resolving page...");
+                Log.Info("We were served an HTML page, resolving it to the actual download link");
                 Uri m;
                 using (StreamReader sr = new StreamReader(s))
                 {
                     var c = sr.ReadToEnd();
                     m = new Uri(Regex.Match(c, "kNO = \"(.+)\"").Groups[1].Value);
+                    Log.InfoFormat("Resolved to: {0}", m.ToString());
                 }
                 s.Close();
                 s.Dispose();
@@ -81,17 +88,19 @@ namespace ModernMinas.Update.Api.Resolvers
             }
             else
             {
-                Console.WriteLine("MediafireResolver: No need for extensive resolving.");
+                Log.Info("We were served a non-HTML file, downloading");
                 ms.Write(buffer, 0, (int)length);
             }
 
 
             if (!headers.ContainsKey("content-length"))
             {
+                Log.Error("Content-length header missing.");
                 throw new Exception("Mediafire server did not send back content-length header. Please contact the developer.");
             }
 
             length = long.Parse(headers["content-length"]);
+            Log.InfoFormat("Content-length is {0}.", length);
 
             buffer = new byte[1024];
             Task.Factory.StartNew(() =>
@@ -116,10 +125,12 @@ namespace ModernMinas.Update.Api.Resolvers
             }
 
             OnStatusChanged(1, StatusType.Downloading);
+            Log.Info("Download finished.");
             ms.Flush();
             ms.Seek(0, SeekOrigin.Begin);
             s.Close();
             s.Dispose();
+            Log.Info("File saved.");
 
             return ms;
         }
