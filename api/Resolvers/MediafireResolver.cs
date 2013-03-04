@@ -19,7 +19,8 @@ namespace ModernMinas.Update.Api.Resolvers
         {
             var wc = new WebClient();
             var url = new Uri(string.Format("http://mediafire.com/?{0}", Expand(resolverNode.SelectSingleNode("child::id").InnerText)));
-
+            Uri oldM = null;
+            
             MemoryStream ms = new MemoryStream();
 
         retry1:
@@ -38,6 +39,8 @@ namespace ModernMinas.Update.Api.Resolvers
                 sw.WriteLine("GET {0} HTTP/1.0", url.PathAndQuery);
                 sw.WriteLine("Host: {0}", url.Host);
                 sw.WriteLine("User-Agent: ModernMinasLauncher/3.0 (U; compatible)");
+                if (oldM != null)
+                    sw.WriteLine("Referer: {0}", oldM.ToString());
                 sw.WriteLine("Connection: close");
                 sw.WriteLine();
                 sw.Flush();
@@ -51,6 +54,7 @@ namespace ModernMinas.Update.Api.Resolvers
                     headers.Add(l[0].ToLower(), string.Join(":", l.Skip(1)));
                 }
             }
+            oldM = url;
             if (headers.ContainsKey("location"))
             {
                 url = new Uri(url, headers["location"]);
