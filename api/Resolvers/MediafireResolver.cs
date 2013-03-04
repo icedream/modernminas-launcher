@@ -85,6 +85,12 @@ namespace ModernMinas.Update.Api.Resolvers
                 ms.Write(buffer, 0, (int)length);
             }
 
+
+            if (!headers.ContainsKey("content-length"))
+            {
+                throw new Exception("Mediafire server did not send back content-length header. Please contact the developer.");
+            }
+
             length = long.Parse(headers["content-length"]);
 
             buffer = new byte[1024];

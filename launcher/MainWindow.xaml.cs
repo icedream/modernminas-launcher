@@ -60,6 +60,13 @@ namespace ModernMinas.Launcher
             w.Opacity = 0;
             w.Background = Brushes.Transparent;
 
+            // Show app version in titlebar
+            if (System.IO.File.Exists("version.txt"))
+            {
+                this.Title += " v";
+                this.Title += System.IO.File.ReadAllText("version.txt").Replace("_", ".");
+            }
+
             // Image gallery
             Task.Factory.StartNew(() =>
             {
