@@ -54,7 +54,7 @@ namespace ModernMinas.Update.Api.Resolvers
                 {
                     var l = line.Split(':');
                     string n = l[0].ToLower();
-                    string v = string.Join(":", l.Skip(1));
+                    string v = string.Join(":", l.Skip(1)).Substring(1);
                     Log.InfoFormat("Server returned header: {0} = {1}", n, v);
                     headers.Add(n, v);
                 }
@@ -70,7 +70,7 @@ namespace ModernMinas.Update.Api.Resolvers
             byte[] buffer = new byte[length];
             s.Read(buffer, 0, (int)length);
 
-            if (Encoding.UTF8.GetString(buffer).Contains("<!DOCTYPE html>") || Encoding.UTF8.GetString(buffer).Contains("<html>"))
+            if (Encoding.UTF8.GetString(buffer).Contains("<!DOCTYPE html>") || Encoding.UTF8.GetString(buffer).Contains("<html>") || (headers.ContainsKey("content-type") && headers["content-type"].Contains("text/html")))
             {
                 Log.Info("We were served an HTML page, resolving it to the actual download link");
                 Uri m;
