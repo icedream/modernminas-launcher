@@ -18,11 +18,15 @@ namespace ModernMinas.Update.Api
         {
             _log = LogManager.GetLogger("AppDomain");
 
-            BasicConfigurator.Configure(
-                new FileAppender() {
+            var _fa =
+                new FileAppender()
+                {
                     Layout = new log4net.Layout.PatternLayout("%timestamp [%thread] %-5level %logger - %message%newline"),
                     File = Path.Combine(Environment.CurrentDirectory, "update.log")
-                },
+                };
+            _fa.ActivateOptions();
+            BasicConfigurator.Configure(
+                _fa,
                 new ConsoleAppender()
             );
 
