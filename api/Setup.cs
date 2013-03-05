@@ -23,7 +23,7 @@ namespace ModernMinas.Update.Api
 
         public Setup(Uri uri, Repository repo)
         {
-            using (var rs = _wc.OpenRead(new Uri(uri, "setup.dat"))) // remote access to compressed data
+            using (var rs = _wc.OpenRead(new Uri(uri, string.Format("setup.dat?rnd={0}", new Random().Next())))) // remote access to compressed data
             using (var ds = new DeflateStream(rs, SharpCompress.Compressor.CompressionMode.Decompress)) // decompress (deflate)
                 _doc.Load(ds); // load xml
             Repository = repo;

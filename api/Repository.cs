@@ -43,7 +43,7 @@ namespace ModernMinas.Update.Api
             package = package.ToLower();
 
             XmlDocument doc = new XmlDocument();
-            var uri = new Uri(RepositoryBase, string.Format("packages/{0}.dat", package));
+            var uri = new Uri(RepositoryBase, string.Format("packages/{0}.dat?rnd={1}", package, new Random().Next()));
             Log.DebugFormat("Fetching remote package xml for {0} from {1}", package, uri);
 
             using (var rs = _wc.OpenRead(uri)) // remote access to compressed data
