@@ -8,11 +8,15 @@ using System.Threading.Tasks;
 using System.Xml;
 using System.Data;
 using System.Data.SQLite;
+using log4net;
 
 namespace ModernMinas.Update.Api
 {
     public class CacheFile : IDisposable
     {
+        private ILog _log;
+        protected ILog Log { get { if (_log == null) _log = LogManager.GetLogger(this.GetType()); return _log; } }
+
         private SQLiteConnection _sqlite = new SQLiteConnection();
 
         public CacheFile(string file)
@@ -22,14 +26,19 @@ namespace ModernMinas.Update.Api
             if (!File.Exists(file))
             {
                 firstTimeUsage = true;
+                Log.InfoFormat("Creating sqlite database at {0}", file);
                 SQLiteConnection.CreateFile(file);
             }
-            
+
+            Log.InfoFormat("Connecting to {0}", file);
             _sqlite.ConnectionString = string.Format("Data Source={0}", file);
             _sqlite.Open();
 
             if (firstTimeUsage)
+            {
+                Log.Debug("Creating table \"packages\" due to firstTimeUsage being true");
                 _execNonQuery("CREATE TABLE IF NOT EXISTS packages (name VARCHAR(100) NOT NULL, version VARCHAR(100) NOT NULL, xml TEXT NOT NULL, PRIMARY KEY('name'));");
+            }
         }
 
         ~CacheFile()
@@ -44,11 +53,13 @@ namespace ModernMinas.Update.Api
 
         private void _execNonQuery(string command)
         {
+            Log.DebugFormat("_execNonQuery: {0}", command);
             _getSqliteCmd(command).ExecuteNonQuery();
         }
 
         private SQLiteDataReader _execReader(string command)
         {
+            Log.DebugFormat("_execReader: {0}", command);
             return _getSqliteCmd(command).ExecuteReader();
         }
 
@@ -63,6 +74,7 @@ namespace ModernMinas.Update.Api
                     version = reader.GetString(0);
                 }
             }
+            Log.DebugFormat("Cached version of {0} is {1}", package, version);
             return version;
         }
 
@@ -83,6 +95,7 @@ namespace ModernMinas.Update.Api
         public void CachePackage(string package, string version, string xml)
         {
             xml = Convert.ToBase64String(Encoding.UTF8.GetBytes(xml));
+            Log.DebugFormat("Caching package {0} at version {1}", package, version);
             _execNonQuery(string.Format("INSERT OR REPLACE INTO packages (name, version, xml) VALUES ('{0}','{1}','{2}')", package, version, xml));
         }
 
@@ -115,7 +128,7 @@ namespace ModernMinas.Update.Api
 
         public void DeleteCache(string package)
         {
-            var version = string.Empty;
+            Log.DebugFormat("Uncaching package {0}", package);
             _execNonQuery(string.Format("DELETE FROM packages WHERE name=\"{0}\"", package));
         }
 
@@ -132,6 +145,7 @@ namespace ModernMinas.Update.Api
         bool finalized = false;
         public void Dispose()
         {
+            Log.Debug("Closing connectiong/Disposing");
             if (!finalized)
             {
                 _sqlite.Dispose();

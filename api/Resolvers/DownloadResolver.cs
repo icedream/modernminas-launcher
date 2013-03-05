@@ -24,9 +24,8 @@ namespace ModernMinas.Update.Api.Resolvers
             if (resolverNode.SelectSingleNode("child::type").InnerText != "string")
                 throw new NotImplementedException();
 
-            //Console.WriteLine("DownloadResolver: Returning a string");
             string url = Expand(resolverNode.SelectSingleNode("child::url").InnerText);
-            //Console.WriteLine("DownloadResolver: URL is {0}", url);
+            Log.InfoFormat("Downloading as string from URL: {0}", url);
             
             string resultString = null;
 
@@ -45,6 +44,7 @@ namespace ModernMinas.Update.Api.Resolvers
                     System.Threading.Thread.Sleep(10);
             }
 
+            Log.InfoFormat("Download saved in string (actual string length is {0})", resultString.Length);
             return resultString;
         }
 
@@ -58,6 +58,7 @@ namespace ModernMinas.Update.Api.Resolvers
                     throw new NotImplementedException();
 
             string url = Expand(resolverNode.SelectSingleNode("child::url").InnerText);
+            Log.InfoFormat("Downloading as memory stream from URL: {0}", url);
 
             MemoryStream targetStream = new MemoryStream();
 
@@ -66,7 +67,7 @@ namespace ModernMinas.Update.Api.Resolvers
                 using (var input = wc.OpenRead(url))
                 {
                     long length = long.Parse(wc.ResponseHeaders[HttpResponseHeader.ContentLength]);
-                    System.Diagnostics.Debug.WriteLine("Receiving {0} bytes", length, null);
+                    Log.InfoFormat("Download length (as described by header): {0}", length);
 
                     // Transfer thread
                     Task.Factory.StartNew(() =>
@@ -99,7 +100,7 @@ namespace ModernMinas.Update.Api.Resolvers
                 }
             }
 
-            System.Diagnostics.Debug.WriteLine("Returning a memory stream from DLResolver");
+            Log.InfoFormat("Download cached in memory stream (actual file size is {0})", targetStream.Length);
             return targetStream;
         }
     }

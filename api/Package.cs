@@ -11,6 +11,7 @@ using SharpCompress.Archive.Zip;
 using SharpCompress.IO;
 using SharpCompress.Common;
 using SharpCompress.Common.Zip;
+using log4net;
 
 namespace ModernMinas.Update.Api
 {
@@ -18,6 +19,9 @@ namespace ModernMinas.Update.Api
 
     public class Package
     {
+        private ILog _log;
+        protected ILog Log { get { if (_log == null) _log = LogManager.GetLogger(this.GetType()); return _log; } }
+
         public Package(XmlNode packageNode, Repository repository)
         {
             _packageXmlNode = packageNode;
@@ -46,6 +50,8 @@ namespace ModernMinas.Update.Api
                              select new Selector(xmlNode)).ToArray();
             else
                 Selectors = new Selector[] { };
+
+            _log.DebugFormat("Opened package, ID is {0}, Name is {1}, Version is {2}", ID, Name, Version);
         }
 
         public string Name { get; set; }
@@ -80,7 +86,7 @@ namespace ModernMinas.Update.Api
         /// </summary>
         public void Uninstall(DirectoryInfo targetDirectory)
         {
-            Console.WriteLine("Uninstalling package: {0}", this.Name);
+            Log.InfoFormat("Uninstalling package: {0}", this.Name);
             ProcessNode(new XmlNodeReader(_packageUninstallXmlNode), targetDirectory);
         }
 
@@ -89,7 +95,7 @@ namespace ModernMinas.Update.Api
         /// </summary>
         public void Install(DirectoryInfo targetDirectory)
         {
-            Console.WriteLine("Installing package: {0}", this.Name);
+            Log.InfoFormat("Installing package: {0}", this.Name);
             GetSourceArchive();
             ProcessNode(new XmlNodeReader(_packageInstallXmlNode), targetDirectory);
         }
@@ -102,6 +108,7 @@ namespace ModernMinas.Update.Api
             do
             {
                 _repository.OnStatusChanged(e);
+                Log.DebugFormat("ProcessNode({1}): {0}", reader.Name, ID);
                 switch (reader.Name.ToLower())
                 {
                     case "extract":
@@ -109,6 +116,7 @@ namespace ModernMinas.Update.Api
                             string file = VariableResolver.Expand(reader.GetAttribute("file"), this);
                             string targetpath = Path.Combine(targetDirectory.FullName, VariableResolver.Expand(reader.GetAttribute("targetpath"), this));
 
+                            Log.InfoFormat("ProcessNode: Extracting {0} to {1}", file, targetpath);
                             Directory.CreateDirectory(Path.GetDirectoryName(targetpath));
                             _archive.ExtractFile(file, targetpath);
                         }
@@ -117,6 +125,7 @@ namespace ModernMinas.Update.Api
                         {
                             string targetfolder = Path.Combine(targetDirectory.FullName, VariableResolver.Expand(reader.GetAttribute("targetfolder"), this));
 
+                            Log.InfoFormat("ProcessNode: Extracting {0} to {1}", "everything", targetfolder);
                             _archive.ExtractAllFiles(targetfolder);
                         }
                         break;
@@ -131,6 +140,7 @@ namespace ModernMinas.Update.Api
                             foreach (string entry in FileFilterUtil.FilterFiles(_archive.GetFileEntries(), filter))
                             {
                                 string targetpath = Path.Combine(targetfolder.Replace('/', Path.DirectorySeparatorChar), entry.Replace('/', Path.DirectorySeparatorChar));
+                                Log.InfoFormat("ProcessNode: Extracting {0} to {1}", entry, targetpath);
                                 Directory.CreateDirectory(Path.GetDirectoryName(targetpath));
                                 _archive.ExtractFile(entry, targetpath);
                             }
@@ -141,6 +151,7 @@ namespace ModernMinas.Update.Api
                         {
                             string targetpath = Path.Combine(targetDirectory.FullName, VariableResolver.Expand(reader.GetAttribute("targetpath"), this));
 
+                            Log.InfoFormat("ProcessNode: Deleting {0}", targetpath);
                             File.Delete(targetpath);
                             e.Progress += step;
                         }
@@ -152,6 +163,7 @@ namespace ModernMinas.Update.Api
                             var d = new DirectoryInfo(folder);
                             foreach (var file in d.EnumerateFiles(string.IsNullOrEmpty(filter) ? "*" : filter, SearchOption.AllDirectories))
                             {
+                                Log.InfoFormat("ProcessNode: Deleting {0}", file.FullName);
                                 file.Delete();
                                 if (!file.Directory.EnumerateFiles().Any())
                                     file.Directory.Delete();
@@ -180,9 +192,11 @@ namespace ModernMinas.Update.Api
 
                             foreach (ZipArchiveEntry entry in from x in targetZip.Entries where FileFilterUtil.IsMatch(x.FilePath, filter) select x)
                             {
+                                Log.InfoFormat("ProcessNode: Removing {0} from {1}", entry.FilePath, target);
                                 targetZip.RemoveEntry(entry);
                             }
 
+                            Log.InfoFormat("ProcessNode: Updating {0}", target);
                             targetZip.SaveTo(target + ".~", CompressionType.Deflate);
                             targetZip.Dispose();
 
@@ -216,10 +230,15 @@ namespace ModernMinas.Update.Api
                                 var entriesWhichAreSame = (from zipentry in targetZip.Entries where zipentry.FilePath.Replace(Path.DirectorySeparatorChar, '\\') == entry select zipentry).ToArray();
                                 if (entriesWhichAreSame.Any())
                                     foreach (var zipentry in entriesWhichAreSame)
+                                    {
+                                        Log.InfoFormat("ProcessNode: Removing {0} from {1}", zipentry.FilePath, target);
                                         targetZip.RemoveEntry(zipentry);
+                                    }
+                                Log.InfoFormat("ProcessNode: Adding {0} to {1}", entry, target);
                                 targetZip.AddEntry(entry, ms);
                             }
 
+                            Log.InfoFormat("ProcessNode: Updating {0}", target);
                             targetZip.SaveTo(target + ".~", CompressionType.Deflate);
                             targetZip.Dispose();
 
@@ -233,6 +252,7 @@ namespace ModernMinas.Update.Api
                             string sourcePath = Path.Combine(targetDirectory.FullName, VariableResolver.Expand(reader.GetAttribute("path"), this));
                             string targetPath = Path.Combine(targetDirectory.FullName, VariableResolver.Expand(reader.GetAttribute("targetpath"), this));
 
+                            Log.InfoFormat("ProcessNode: Moving {0} to {1}", sourcePath, targetPath);
                             Directory.CreateDirectory(Path.GetDirectoryName(targetPath));
                             File.Move(sourcePath, targetPath);
                             e.Progress += step;
@@ -245,10 +265,14 @@ namespace ModernMinas.Update.Api
 
                             e.Status = StatusType.Downloading;
                             _repository.OnStatusChanged(e);
+                            Log.InfoFormat("ProcessNode: Downloading {0} to {1}", sourcePath, targetPath);
                             new System.Net.WebClient().DownloadFile(new Uri(sourcePath), targetPath);
 
                             e.Progress += step;
                         }
+                        break;
+                    default:
+                        Log.WarnFormat("ProcessNode: Unknown step {0}", reader.Name);
                         break;
                 }
             } while (reader.Read());
@@ -270,6 +294,8 @@ namespace ModernMinas.Update.Api
             int i = -1;
             foreach (ResolverBase resolver in _resolvers)
             {
+                Log.DebugFormat("GetSourceArchive({0}): Current resolver is {0}", ID, resolver.GetType().Name);
+
                 var eventHandler = new EventHandler<StatusEventArgs>((sender, e) =>
                 {
                     progress[i] = e.Progress;
@@ -279,32 +305,31 @@ namespace ModernMinas.Update.Api
                 i++;
                 foreach (var method in from m in resolver.GetType().GetMethods() where m.Name.StartsWith("ResolveTo") select m)
                 {
-                    System.Diagnostics.Debug.WriteLine("Trying method {0} when input is {1}NULL.", method.Name, resolver.Input == null ? "": "NOT ");
+                    Log.DebugFormat("GetSourceArchive: Trying method {0} when input is {1}NULL.", method.Name, resolver.Input == null ? "" : "NOT ");
                     try
                     {
                         try
                         {
                             lastResult = method.Invoke(resolver, null);
-                            System.Diagnostics.Debug.WriteLine("Method {0} successful.", method.Name, null);
+                            Log.DebugFormat("GetSourceArchive: Method {0} successful.", method.Name);
                         }
                         catch (System.Reflection.TargetInvocationException err)
                         {
-                            System.Diagnostics.Debug.WriteLine("Method {0} failed (TargetInvocationException).", method.Name, null);
-                            System.Diagnostics.Debug.WriteLine(err.ToString());
+                            Log.WarnFormat("GetSourceArchive: Method {0} failed (TargetInvocationException).", method.Name);
+                            Log.Warn("GetSourceArchive: TargetInvocationException detected", err);
                             throw err.InnerException;
                         }
                         break;
                     }
                     catch (NotImplementedException)
                     {
-                        System.Diagnostics.Debug.WriteLine("Method {0} rejected.", method.Name, null);
+                        Log.DebugFormat("GetSourceArchive: Method {0} rejected.", method.Name, null);
                         continue;
                     }
                     catch (Exception err)
                     {
-                        System.Diagnostics.Debug.WriteLine("Method {0} failed.", method.Name, null);
-                        //System.Diagnostics.Debug.WriteLine("Exception of type {0}", err.GetType().Name, null);
-                        System.Diagnostics.Debug.WriteLine(err.ToString());
+                        Log.WarnFormat("GetSourceArchive: Method {0} failed", method.Name);
+                        Log.Warn("Exception detected", err);
                         throw err;
                     }
                 }
@@ -313,8 +338,12 @@ namespace ModernMinas.Update.Api
             }
 
             if (lastResult.GetType().IsSubclassOf(typeof(ArchiveBase)))
+            {
+                Log.Fatal("GetSourceArchive: Package resolved.");
                 return _archive = lastResult as ArchiveBase;
+            }
 
+            Log.Fatal("GetSourceArchive: Package not resolvable: Result is not an archive.");
             throw new InvalidOperationException("Package did not resolve to an archive.");
         }
     }

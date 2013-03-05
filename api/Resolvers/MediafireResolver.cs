@@ -18,7 +18,8 @@ namespace ModernMinas.Update.Api.Resolvers
         public override Stream ResolveToStream()
         {
             var wc = new WebClient();
-            var url = new Uri(string.Format("http://mediafire.com/?{0}", Expand(resolverNode.SelectSingleNode("child::id").InnerText)));
+            var originUrl = new Uri(string.Format("http://mediafire.com/?{0}", Expand(resolverNode.SelectSingleNode("child::id").InnerText)));
+            var url = originUrl;
             Uri oldM = null;
             
             MemoryStream ms = new MemoryStream();
@@ -77,8 +78,19 @@ namespace ModernMinas.Update.Api.Resolvers
                 using (StreamReader sr = new StreamReader(s))
                 {
                     var c = sr.ReadToEnd();
-                    m = new Uri(Regex.Match(c, "kNO = \"(.+)\"").Groups[1].Value);
-                    Log.InfoFormat("Resolved to: {0}", m.ToString());
+
+                    // download_repair.php, fixes empty URI exception.
+                    if (c.Contains("There was a problem with your download"))
+                    {
+                        Log.WarnFormat("Mediafire reported a broken download, going back to {0}", originUrl);
+                        m = originUrl;
+                    }
+                    else
+                    {
+                        // Find javascripted URI of direct download
+                        m = new Uri(Regex.Match(c, "kNO = \"(.+)\"").Groups[1].Value);
+                        Log.InfoFormat("Resolved to: {0}", m.ToString());
+                    }
                 }
                 s.Close();
                 s.Dispose();

@@ -6,17 +6,21 @@ using System.Xml;
 using System.Net;
 using SharpCompress.Compressor.Deflate;
 using System.IO;
+using log4net;
 
 namespace ModernMinas.Update.Api
 {
     public class Repository
     {
+        private ILog _log;
+        protected ILog Log { get { if (_log == null) _log = LogManager.GetLogger(this.GetType()); return _log; } }
+
         public Repository(Uri repository, CacheFile cache)
         {
             Cache = cache;
             RepositoryBase = repository;
 
-            Console.WriteLine("Using {0} as repo base", RepositoryBase.ToString());
+            Log.DebugFormat("Using {0} as repo base", RepositoryBase.ToString());
 
             TargetDirectory = new DirectoryInfo(Environment.CurrentDirectory);
         }
@@ -40,7 +44,8 @@ namespace ModernMinas.Update.Api
 
             XmlDocument doc = new XmlDocument();
             var uri = new Uri(RepositoryBase, string.Format("packages/{0}.dat", package));
-            //Console.WriteLine("Fetching package info for {0}: {1}", package, uri.ToString());
+            Log.DebugFormat("Fetching remote package xml for {0} from {1}", package, uri);
+
             using (var rs = _wc.OpenRead(uri)) // remote access to compressed data
                 using (var ds = new DeflateStream(rs, SharpCompress.Compressor.CompressionMode.Decompress)) // decompress (deflate)
                     doc.Load(ds); // load xml
@@ -58,6 +63,7 @@ namespace ModernMinas.Update.Api
 
             XmlDocument doc = new XmlDocument();
             var xml = Cache.GetCachedPackageXml(package);
+            Log.DebugFormat("Fetching local package xml for {0} from cache", package);
             doc.LoadXml(xml);
             return doc.FirstChild; // <package...>...</package>
         }
@@ -84,7 +90,7 @@ namespace ModernMinas.Update.Api
                 // This expects all packages to be hard requirements ("needed to have this package working")
                 if (!Cache.IsCached(currentPackage.ID)) // not installed?
                 {
-                    Console.WriteLine("Dependency needs to be installed: {0}", currentPackage.Name);
+                    Log.DebugFormat("Dependency needs to be installed for {1}: {0}", currentPackage.ID, package.ID);
                     OnStatusChanged(new StatusEventArgs(package, StatusType.InstallingDependencies, (float)(i / j)));
                     InstallPackage(currentPackage);
                 }
@@ -150,11 +156,11 @@ namespace ModernMinas.Update.Api
             if (local.Version.Equals(remote.Version))
             {
                 OnStatusChanged(new StatusEventArgs(local, StatusType.Finished, 1));
-                Console.WriteLine("Skipping {0}, no update to {1} needed.", local.Name, local.Version);
+                Log.DebugFormat("Skipping {0}, no update to {1} needed.", local.Name, local.Version);
                 return;
             }
 
-            Console.WriteLine("Updating {0} from {1} to {2}:", local.Name, local.Version, remote.Version);
+            Log.DebugFormat("Updating {0} from {1} to {2}:", local.Name, local.Version, remote.Version);
             UninstallPackage(local, false);
             InstallPackage(remote);
         }
