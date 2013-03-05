@@ -22,7 +22,8 @@ namespace ModernMinas.Update.Api
                 new FileAppender()
                 {
                     Layout = new log4net.Layout.PatternLayout("%timestamp [%thread] %-5level %logger - %message%newline"),
-                    File = Path.Combine(Environment.CurrentDirectory, "update.log")
+                    File = Path.Combine(Environment.CurrentDirectory, "update.log"),
+                    AppendToFile = false
                 };
             _fa.ActivateOptions();
             BasicConfigurator.Configure(
