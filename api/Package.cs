@@ -51,7 +51,7 @@ namespace ModernMinas.Update.Api
             else
                 Selectors = new Selector[] { };
 
-            _log.DebugFormat("Opened package, ID is {0}, Name is {1}, Version is {2}", ID, Name, Version);
+            Log.DebugFormat("Opened package, ID is {0}, Name is {1}, Version is {2}", ID, Name, Version);
         }
 
         public string Name { get; set; }
