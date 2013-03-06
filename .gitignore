@@ -13,3 +13,4 @@ TestResults
 /libraries
 /packages
 /Modern Minas.sln.ide
+/externals/log4net.patch/log4net.xml
