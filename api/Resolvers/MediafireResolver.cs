@@ -67,11 +67,11 @@ namespace ModernMinas.Update.Api.Resolvers
                 url = new Uri(url, headers["location"]);
                 goto retry1;
             }
-            long length = UTF8Encoding.UTF8.GetMaxByteCount(16);
-            byte[] buffer = new byte[length];
-            s.Read(buffer, 0, (int)length);
+            
+            long length;
+            byte[] buffer;
 
-            if (Encoding.UTF8.GetString(buffer).Contains("<!DOCTYPE html>") || Encoding.UTF8.GetString(buffer).Contains("<html>") || (headers.ContainsKey("content-type") && headers["content-type"].Contains("text/html")))
+            if (headers.ContainsKey("content-type") && headers["content-type"].Contains("text/html"))
             {
                 Log.Info("We were served an HTML page, resolving it to the actual download link");
                 Uri m;
@@ -101,9 +101,7 @@ namespace ModernMinas.Update.Api.Resolvers
             else
             {
                 Log.Info("We were served a non-HTML file, downloading");
-                ms.Write(buffer, 0, (int)length);
             }
-
 
             if (!headers.ContainsKey("content-length"))
             {
