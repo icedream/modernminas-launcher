@@ -112,18 +112,19 @@ namespace ModernMinas.Update.Api.Resolvers
             length = long.Parse(headers["content-length"]);
             Log.InfoFormat("Content-length is {0}.", length);
 
-            buffer = new byte[1024];
+            buffer = new byte[2048];
             Task.Factory.StartNew(() =>
             {
                 var l0 = 0;
-                while (ms.Position < length)
+                var l = 1;
+                while (l0 < 3) // ignore length for debugging purposes
                 {
-                    var l = s.Read(buffer, 0, buffer.Length);
+                    l = s.Read(buffer, 0, buffer.Length);
                     if (l == 0)
-                        if (++l0 == 3)
-                            break;
-                        else
-                            continue;
+                    {
+                        l0++;
+                        continue;
+                    }
                     else
                     {
                         l0 = 0;
@@ -147,7 +148,7 @@ namespace ModernMinas.Update.Api.Resolvers
             }
 
             OnStatusChanged(1, StatusType.Downloading);
-            Log.Info("Download finished.");
+            Log.InfoFormat("Download finished (received {0} bytes).", ms.Position);
             ms.Flush();
             ms.Seek(0, SeekOrigin.Begin);
             s.Close();
