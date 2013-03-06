@@ -14,3 +14,4 @@ TestResults
 /packages
 /Modern Minas.sln.ide
 /externals/log4net.patch/log4net.xml
+/externals/log4net/build/
