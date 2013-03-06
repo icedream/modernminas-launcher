@@ -117,11 +117,23 @@ namespace ModernMinas.Update.Api.Resolvers
             buffer = new byte[1024];
             Task.Factory.StartNew(() =>
             {
+                var l0 = 0;
                 while (ms.Position < length)
                 {
                     var l = s.Read(buffer, 0, buffer.Length);
-                    ms.Write(buffer, 0, l);
+                    if (l == 0)
+                        if (++l0 == 3)
+                            break;
+                        else
+                            continue;
+                    else
+                    {
+                        l0 = 0;
+                        ms.Write(buffer, 0, l);
+                    }
                 }
+                
+                length = ms.Position;
             });
             Task.Factory.StartNew(() =>
             {
