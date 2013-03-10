@@ -285,7 +285,7 @@ namespace ModernMinas.Launcher
                 "-Djava.io.tmpdir=" + System.IO.Path.Combine(App.GamePath, "tmp"),
                 "-cp", App.StartupClasspath,
                 "net.minecraft.client.Minecraft",
-                config.Username,
+                l.CaseCorrectUsername,
                 l.SessionId,
                 "minas.mc.modernminas.de:25565"
             });
