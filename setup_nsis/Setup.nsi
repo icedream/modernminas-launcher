@@ -47,7 +47,7 @@ XPStyle on
 Section "Install"
 	SetOutPath $INSTDIR
 	
-	ExecWait "taskkill /F /IM mmlaunch.exe"
+	nsExec::ExecToLog "taskkill /F /IM mmlaunch.exe"
 	
 	File /r "${SOURCE_BINPATH}\*.exe"
 	File /r "${SOURCE_BINPATH}\*.dll"
