@@ -33,7 +33,7 @@ namespace ModernMinas.Update.Api.Resolvers
             // We are going to do a manual request with manual parsing here. ._.
             var socket1 = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
             socket1.Connect(new DnsEndPoint(url.Host, 80));
-            var s = new BufferedStream(new NetworkStream(socket1));
+            using (var s = new NetworkStream(socket1))
             using (var sr = new StreamReader(s))
             using (var sw = new StreamWriter(s))
             {
@@ -114,7 +114,9 @@ namespace ModernMinas.Update.Api.Resolvers
                     var l = 1;
                     while (l0 < 3) // ignore length for debugging purposes
                     {
-                        l = sr.BaseStream.Read(buffer, 0, buffer.Length);
+                        if (s == null)
+                            break;
+                        l = s.Read(buffer, 0, buffer.Length);
                         if (l == 0)
                         {
                             l0++;
