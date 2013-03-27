@@ -7,9 +7,11 @@ The launcher for the Modern Minas Minecraft modification.
 Requirements (source)
 =====================
 To build the source code, you need:
+
 - Access to git in some way (usually by using the Git binaries or TortoiseGit on Windows)
 - Microsoft.NET Framework 4.0 Client Profile/better or Mono 2.10/better
 - NuGet (or use the included <code>.nuget/nuget.exe</code> from the source tree)
+
 Additionally, you need to download the source code of log4net. As it is included as a git submodule you can just run this for proper inclusion:
 	git submodule update --init
 This will add log4net to the correct folder with its complete source code tree.
