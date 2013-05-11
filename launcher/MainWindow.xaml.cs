@@ -73,7 +73,7 @@ namespace ModernMinas.Launcher
                 var urls =
                     (
                         from url in (new WebClient()).DownloadString("http://www.modernminas.de/img/gallery/launcher/").Split('\n')
-                        where !string.IsNullOrEmpty(url) && !string.IsNullOrWhiteSpace(url)
+                        where !string.IsNullOrEmpty(url) //&& !string.IsNullOrWhiteSpace(url)
                         select url
                         ).Randomize();
                 while ((bool)this.Dispatcher.Invoke(new Func<bool>(() => { return this.IsVisible; })))
@@ -145,7 +145,7 @@ namespace ModernMinas.Launcher
             {
                 this.LoginError.Content = text;
                 if (!string.IsNullOrEmpty(text))
-                    Fade(this.ProgressPanel, 0, null, 250.0, (a, b) =>
+                    Fade(this.ProgressPanel, 0, 250.0, (a, b) =>
                     {
                         this.ProgressPanel.Visibility = System.Windows.Visibility.Collapsed;
                         this.LoginPanel.Visibility = System.Windows.Visibility.Visible;
@@ -155,7 +155,7 @@ namespace ModernMinas.Launcher
                         Fade(this.LoginPanel, 1);
                     });
                 else
-                    Fade(this.LoginError, 0, null, 250.0);
+                    Fade(this.LoginError, 0, 250.0);
             }));
         }
 
@@ -204,11 +204,11 @@ namespace ModernMinas.Launcher
                 SetError("You need to enter a password.");
                 return;
             }
-            Fade(LoginPanel, 0, null, 250, (a, b) => {
+            Fade(LoginPanel, 0, 250, (a, b) => {
                 LoginPanel.Visibility = System.Windows.Visibility.Collapsed;
                 ProgressPanel.Visibility = System.Windows.Visibility.Visible;
                 ProgressPanel.Opacity = 0;
-                Fade(ProgressPanel, 1, null, 250); //, (c, d) => {
+                Fade(ProgressPanel, 1, 250); //, (c, d) => {
                 config.Username = Username.Text;
                 config.Password = System.Runtime.InteropServices.Marshal.PtrToStringBSTR(System.Runtime.InteropServices.Marshal.SecureStringToBSTR(Password.SecurePassword)).StartsWith("\x00\xff") ? config.Password : Password.SecurePassword;
                 var thr = new System.Threading.Thread(
@@ -250,10 +250,10 @@ namespace ModernMinas.Launcher
             foreach(string apiUrl in new[] { "http://login.modernminas.de/", "http://login.minecraft.net/" })
             {
                 l = new MinecraftLogin(new Uri(apiUrl));
-                Debug.WriteLine("[Login] API url: {0}", apiUrl, null);
+                Debug.WriteLine(string.Format("[Login] API url: {0}", apiUrl));
                 bool success = l.Login(config.Username, config.Password);
-                Debug.WriteLine("[Login] Succeeded: {0}", success, null);
-                Debug.WriteLine("[Login] Last error: {0}", l.LastError, null);
+                Debug.WriteLine(string.Format("[Login] Succeeded: {0}", success));
+                Debug.WriteLine(string.Format("[Login] Last error: {0}", l.LastError));
                 if (success)
                     break;
             }
@@ -280,7 +280,7 @@ namespace ModernMinas.Launcher
             var javaw = JavaPath.CreateJava(new[] {
                 "-Xmx" + config.MaximalRam.ToMegabytes() + "M",
                 "-Xincgc",
-                Environment.Is64BitProcess ? "-d64" : "-d32",
+                /*Environment.Is64BitProcess*/ IntPtr.Size == 8 ? "-d64" : "-d32",
                 "-Djava.library.path=" + App.StartupLibrarypath,
                 "-Djava.io.tmpdir=" + System.IO.Path.Combine(App.GamePath, "tmp"),
                 "-cp", App.StartupClasspath,
@@ -301,7 +301,7 @@ namespace ModernMinas.Launcher
             javaw.StartInfo.RedirectStandardError = true;
             javaw.StartInfo.RedirectStandardOutput = true;
             javaw.StartInfo.CreateNoWindow = true;
-            Debug.WriteLine("Starting minecraft, arguments: {0}", javaw.StartInfo.Arguments, null);
+            Debug.WriteLine(string.Format("Starting minecraft, arguments: {0}", javaw.StartInfo.Arguments));
             javaw.Start();
             SetError(null);
             this.Dispatcher.Invoke(new Action(() =>
@@ -336,7 +336,7 @@ namespace ModernMinas.Launcher
 
                     lastError = javaw.StandardError.ReadLine();
                     if (lastError != null) lastError = lastError.Trim();
-                    Debug.WriteLine("[Minecraft] STDERR: {0}", lastError, null);
+                    Debug.WriteLine(string.Format("[Minecraft] STDERR: {0}", lastError));
                     
                     if (lastError == null)
                         continue;
@@ -348,7 +348,7 @@ namespace ModernMinas.Launcher
                         this.Dispatcher.Invoke(new Action(() => w.Fade(0.0, null, 10, (EventHandler)((sender, e) => { w.Hide(); }))));
 #endif
 
-                    lastError = string.Join(" ", lastError.Split(' ').Skip(3));
+                    lastError = string.Join(" ", lastError.Split(' ').Skip(3).ToArray());
 
 #if STATUS_WINDOW
                     // loading text
@@ -406,7 +406,7 @@ namespace ModernMinas.Launcher
                     {
                         var lastError = javaw.StandardOutput.ReadLine();
                         if (lastError != null) lastError = lastError.Trim();
-                        Debug.WriteLine("[Minecraft] STDOUT: {0}", lastError, null);
+                        Debug.WriteLine(string.Format("[Minecraft] STDOUT: {0}", lastError));
 
                         if (lastError == null)
                             continue;
@@ -418,7 +418,7 @@ namespace ModernMinas.Launcher
                             this.Dispatcher.Invoke(new Action(() => w.Fade(0.0, null, 10, (EventHandler)((sender, e) => { w.Hide(); }))));
 #endif
 
-                        lastError = string.Join(" ", lastError.Split(' ').Skip(3));
+                        lastError = string.Join(" ", lastError.Split(' ').Skip(3).ToArray());
                         
 #if STATUS_WINDOW
                         // loading text
@@ -572,7 +572,7 @@ namespace ModernMinas.Launcher
                 SetProgress(progress.Sum(v => v.Value));
                 foreach (var j in progress.Keys)
                 {
-                    Debug.WriteLine("{0}: {1}", j, progress[j]);
+                    Debug.WriteLine(string.Format("{0}: {1}", j, progress[j]));
                 }
             };
             SetProgress(0, setup.Packages.Count() * 4);
@@ -580,7 +580,7 @@ namespace ModernMinas.Launcher
             foreach (var package in setup.Packages)
             {
                 i++;
-                Debug.WriteLine("Current package: {0}", package.ID, null);
+                Debug.WriteLine(string.Format("Current package: {0}", package.ID, null));
 
                 SetProgress(progress.Sum(v => v.Value));
 
@@ -621,7 +621,7 @@ namespace ModernMinas.Launcher
             return string.Format("{0:N1} {1}", size, suffixes[Math.Min(suffixes.Length, i)]);
         }
 
-        public void Fade(FrameworkElement c, double targetOpacity, EasingFunctionBase f = null, double ms = 500.0, EventHandler onFinish = null)
+        public void Fade(FrameworkElement c, double targetOpacity, /*EasingFunctionBase f = null,*/ double ms = 500.0, EventHandler onFinish = null)
         {
             this.Dispatcher.Invoke(new Action(delegate()
             {
@@ -632,13 +632,14 @@ namespace ModernMinas.Launcher
                 animation.From = c.Opacity;
                 animation.To = targetOpacity;
                 animation.Duration = new Duration(duration);
-
+                /*
                 if ((animation.EasingFunction = f) == null)
                 {
                     var easing = new SineEase();
                     easing.EasingMode = EasingMode.EaseOut;
                     animation.EasingFunction = easing;
                 }
+                 */
 
                 Storyboard.SetTargetName(animation, c.Name);
                 Storyboard.SetTargetProperty(animation, new PropertyPath(Control.OpacityProperty));
@@ -664,7 +665,7 @@ namespace ModernMinas.Launcher
         {
             LoginPanel.Visibility = System.Windows.Visibility.Visible;
             LoginPanel.Opacity = 0;
-            Fade(LoginPanel, 1, null, 1000.0);
+            Fade(LoginPanel, 1, 1000.0);
         }
 
         private void OptionsButton_Click(object sender, RoutedEventArgs e)

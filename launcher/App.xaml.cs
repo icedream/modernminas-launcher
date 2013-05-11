@@ -36,7 +36,7 @@ namespace ModernMinas.Launcher
             catch(JavaNotFoundException)
             {
                 if (MessageBox.Show(string.Format("You don't have Java 7 installed properly in your system. You need the {0}-bit version from http://java.com/de/download/manual.jsp. When you installed Java properly, try again." + Environment.NewLine + Environment.NewLine
-                    + "Would you like to open the Java download page now?", Environment.Is64BitOperatingSystem ? 64 : 32), "Java is not properly installed", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.Yes) == MessageBoxResult.Yes)
+                    + "Would you like to open the Java download page now?", /*Environment.Is64BitOperatingSystem*/ IntPtr.Size == 8 ? 64 : 32), "Java is not properly installed", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.Yes) == MessageBoxResult.Yes)
                 {
                     var p = new Process();
                     p.StartInfo.FileName = "http://java.com/de/download/manual.jsp";

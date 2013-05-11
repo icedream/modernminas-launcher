@@ -30,7 +30,7 @@ namespace PackageManager
 
         static string cacheFile = "installation.cache";
         static string repositoryUrl = "http://repo.update.modernminas.de/";
-        static string targetDirectory = System.IO.Path.Combine(Environment.CurrentDirectory);
+        static string targetDirectory = Environment.CurrentDirectory;
 
         static void Main(string[] args)
         {
@@ -39,7 +39,7 @@ namespace PackageManager
             foreach(var s in switches)
             {
                 string switchname = s[0];
-                string switchvalue = string.Join("=", s.Skip(1)).Trim('"');
+                string switchvalue = string.Join("=", s.Skip(1).ToArray()).Trim('"');
 
                 switch (switchname.ToLower())
                 {

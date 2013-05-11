@@ -8,7 +8,6 @@ using System.Xml;
 using System.Xml.Serialization;
 using SharpCompress.Archive;
 using SharpCompress.Archive.Zip;
-using SharpCompress.IO;
 using SharpCompress.Common;
 using SharpCompress.Common.Zip;
 using log4net;
@@ -161,14 +160,14 @@ namespace ModernMinas.Update.Api
                             string filter = VariableResolver.Expand(reader.GetAttribute("filter"), this);
                             string folder = Path.Combine(targetDirectory.FullName, VariableResolver.Expand(reader.GetAttribute("targetfolder"), this));
                             var d = new DirectoryInfo(folder);
-                            foreach (var file in d.EnumerateFiles(string.IsNullOrEmpty(filter) ? "*" : filter, SearchOption.AllDirectories))
+                            foreach (var file in d.GetFiles(string.IsNullOrEmpty(filter) ? "*" : filter, SearchOption.AllDirectories))
                             {
                                 Log.InfoFormat("ProcessNode: Deleting {0}", file.FullName);
                                 file.Delete();
-                                if (!file.Directory.EnumerateFiles().Any())
+                                if (!file.Directory.GetFiles().Any())
                                     file.Directory.Delete();
                             }
-                            if (!d.EnumerateFiles().Any())
+                            if (!d.GetFiles().Any())
                                 d.Delete();
                             e.Progress += step;
                         }
@@ -224,7 +223,18 @@ namespace ModernMinas.Update.Api
                                 if (entry.EndsWith("/") || entry.EndsWith(Path.DirectorySeparatorChar.ToString())) continue;
 
                                 MemoryStream ms = new MemoryStream();
-                                _archive.OpenFile(entry).CopyTo(ms);
+                                using (var s = _archive.OpenFile(entry))
+                                {
+                                    //s.CopyTo(ms);
+                                    int i = 1;
+                                    while (i > 0)
+                                    {
+                                        byte[] buffer = new byte[2048];
+                                        i = s.Read(buffer, 0, buffer.Length);
+                                        if (i > 0)
+                                            ms.Write(buffer, 0, buffer.Length);
+                                    }
+                                }
                                 ms.Flush();
                                 ms.Seek(0, SeekOrigin.Begin);
                                 var entriesWhichAreSame = (from zipentry in targetZip.Entries where zipentry.FilePath.Replace(Path.DirectorySeparatorChar, '\\') == entry select zipentry).ToArray();

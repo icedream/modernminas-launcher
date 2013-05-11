@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.IO;
-using System.IO.MemoryMappedFiles;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -47,11 +46,13 @@ namespace ModernMinas.Update.Api.Resolvers
             throw new NotImplementedException();
         }
 
+        /*
         public virtual MemoryMappedFile ResolveToMemoryMappedFile()
         {
             Log.Debug("Skipping memory map file resolve.");
             throw new NotImplementedException();
         }
+         */
 
         public virtual Stream ResolveToStream()
         {

@@ -16,7 +16,7 @@ namespace ModernMinas.Launcher
 {
     static class FadeExtension
     {
-        public static void Fade(this FrameworkElement c, double targetOpacity, EasingFunctionBase f = null, double ms = 500.0, EventHandler onFinish = null)
+        public static void Fade(this FrameworkElement c, double targetOpacity, /*EasingFunctionBase f = null, */double ms = 500.0, EventHandler onFinish = null)
         {
             c.Dispatcher.Invoke(new Action(delegate()
             {
@@ -28,12 +28,14 @@ namespace ModernMinas.Launcher
                 animation.To = targetOpacity;
                 animation.Duration = new Duration(duration);
 
+                /*
                 if ((animation.EasingFunction = f) == null)
                 {
                     var easing = new SineEase();
                     easing.EasingMode = EasingMode.EaseOut;
                     animation.EasingFunction = easing;
                 }
+                 */
 
                 Storyboard.SetTarget(animation, c);
                 Storyboard.SetTargetProperty(animation, new PropertyPath(Control.OpacityProperty));

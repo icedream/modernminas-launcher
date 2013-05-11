@@ -32,7 +32,8 @@ namespace ModernMinas.Update.Api.Resolvers
             // Mediafire has buggy HTTP servers which tend to violate the protocol, crashing the whole download with a ProtocolViolationException.
             // We are going to do a manual request with manual parsing here. ._.
             var socket1 = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-            socket1.Connect(new DnsEndPoint(url.Host, 80));
+            //socket1.Connect(new DnsEndPoint(url.Host, 80));
+            socket1.Connect(new IPEndPoint(Dns.GetHostAddresses(url.Host).First(), 80));
             using (var s = new NetworkStream(socket1))
             using (var sr = new StreamReader(s))
             using (var sw = new StreamWriter(s))
@@ -54,7 +55,7 @@ namespace ModernMinas.Update.Api.Resolvers
                 {
                     var l = line.Split(':');
                     string n = l[0].ToLower();
-                    string v = string.Join(":", l.Skip(1)).Substring(1);
+                    string v = string.Join(":", l.Skip(1).ToArray()).Substring(1);
                     Log.InfoFormat("Server returned header: {0} = {1}", n, v);
                     headers.Add(n, v);
                 }

@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.IO.MemoryMappedFiles;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -13,7 +12,7 @@ namespace ModernMinas.Update.Api.Resolvers
     {
         string ResolveToString();
         ArchiveBase ResolveToArchive();
-        MemoryMappedFile ResolveToMemoryMappedFile();
+        //MemoryMappedFile ResolveToMemoryMappedFile();
         Stream ResolveToStream();
     }
 }

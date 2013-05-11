@@ -27,6 +27,5 @@ namespace ModernMinas.Update.Api
 
         private CacheFile _cache;
         private Uri _repository;
-        private Package[] _packages;
     }
 }

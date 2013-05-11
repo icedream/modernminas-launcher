@@ -55,7 +55,7 @@ namespace ModernMinas.Update.Api
 
             var cps = classpaths.OrderBy(tuple => -tuple.Item1);
 
-            return string.Join(System.IO.Path.PathSeparator.ToString(), from cp in cps select cp.Item2);
+            return string.Join(System.IO.Path.PathSeparator.ToString(), (from cp in cps select cp.Item2).ToArray());
         }
         public string GetStartupLibrarypath()
         {
@@ -72,7 +72,7 @@ namespace ModernMinas.Update.Api
 
             var lps = librarypaths.OrderBy(tuple => -tuple.Item1);
 
-            return string.Join(System.IO.Path.PathSeparator.ToString(), from lp in lps select lp.Item2);
+            return string.Join(System.IO.Path.PathSeparator.ToString(), (from lp in lps select lp.Item2).ToArray());
         }
     }
 }

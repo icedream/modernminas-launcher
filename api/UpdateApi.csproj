@@ -39,6 +39,9 @@
     <StartupObject />
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="SharpCompress.3.5">
+      <HintPath>..\packages\sharpcompress.0.8.2\lib\net35\SharpCompress.3.5.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Data.SQLite">
@@ -46,6 +49,9 @@
     </Reference>
     <Reference Include="System.Data.SQLite.Linq">
       <HintPath>..\packages\System.Data.SQLite.1.0.85.0\lib\net20\System.Data.SQLite.Linq.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Threading.Tasks.NET35">
+      <HintPath>..\packages\System.Threading.Tasks.3.0.1\lib\net35\System.Threading.Tasks.NET35.dll</HintPath>
     </Reference>
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
@@ -91,10 +97,6 @@
     <ProjectReference Include="..\externals\log4net.patch\log4net-net35-clientprofile.csproj">
       <Project>{181fe707-e161-4722-9f38-6aaab6faa106}</Project>
       <Name>log4net-net35-clientprofile</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\externals\sharpcompress.patch\SharpCompress-net3.5-client.csproj">
-      <Project>{10a689cf-76a2-4a4f-96e4-553c33398438}</Project>
-      <Name>SharpCompress-net3.5-client</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
