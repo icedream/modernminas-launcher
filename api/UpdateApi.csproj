@@ -92,6 +92,10 @@
       <Project>{181fe707-e161-4722-9f38-6aaab6faa106}</Project>
       <Name>log4net-net35-clientprofile</Name>
     </ProjectReference>
+    <ProjectReference Include="..\externals\sharpcompress.patch\SharpCompress-net3.5-client.csproj">
+      <Project>{10a689cf-76a2-4a4f-96e4-553c33398438}</Project>
+      <Name>SharpCompress-net3.5-client</Name>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <Content Include="x64\SQLite.Interop.dll">
