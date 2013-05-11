@@ -232,7 +232,7 @@ namespace ModernMinas.Update.Api
                                         byte[] buffer = new byte[2048];
                                         i = s.Read(buffer, 0, buffer.Length);
                                         if (i > 0)
-                                            ms.Write(buffer, 0, buffer.Length);
+                                            ms.Write(buffer, 0, i);
                                     }
                                 }
                                 ms.Flush();
