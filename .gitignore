@@ -9,9 +9,19 @@ obj
 # mstest test results
 TestResults
 
-# others
+# External downloaded dependencies (NuGet, other repositories)
 /libraries
 /packages
+
+# Visual Studio IDE files
 /Modern Minas.sln.ide
+
+# log4net output
 /externals/log4net.patch/log4net.xml
 /externals/log4net/build/
+
+# Backup report/files
+/_UpgradeReport_Files
+/Backup
+/UpgradeLog*.htm
+/UpgradeLog*.XML
