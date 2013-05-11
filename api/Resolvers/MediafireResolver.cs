@@ -117,7 +117,14 @@ namespace ModernMinas.Update.Api.Resolvers
                     {
                         if (s == null)
                             break;
-                        l = s.Read(buffer, 0, buffer.Length);
+                        try
+                        {
+                            l = s.Read(buffer, 0, buffer.Length);
+                        }
+                        catch
+                        {
+                            l = 0;
+                        }
                         if (l == 0)
                         {
                             l0++;
